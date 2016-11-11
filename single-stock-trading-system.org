@@ -78,6 +78,61 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
 ** TODO Subclass for filtering to past data
 
 * TODO Trading system
+We need to be able to implement orders
+
++ An order is long or short
++ The order starts at open, and finishes at close
++ for each we have a starting day
++ starting and finishing both return a number: positive if adding to your account (selling), negative if deducting (buying). Transaction cost is factored in automatically.
+
+For the dates we just use integers, referring to indices for the =stock= datastructure.
+
+We store the date in a special variable, and likewise the current order. On initialisation, we only need to decide 
+#+begin_src lisp
+(defvar *current-date* 0)
+(defvar *current-order* 0)
+
+(defpar *transaction-cost-factor* 0.0025)
+
+(defclass/f order ()
+  (order-start order-end order-volume order-type))
+
+(defun order-create (&optional (order-type :long))
+  (make-instance 'order :order-type order-type
+                 :order-start nil
+                 :order-end nil
+                 :order-volume nil))
+#+end_src
+
+
+#+begin_src lisp
+(defmethod order-open ((order order) (stock stock) (volume integer))
+  ;; check if volume is available for long
+  (when (and (eql (order-type order) :long)
+             (< (aref (stock-volume stock) *current-date*) volume))
+    ;; todo signal something
+    (return-from order-open 0))
+  (setf (order-start order) *current-date*
+        (order-volume order) volume)
+  ;; buy/sell at opening time
+  (let ((amount (* (if (eql (order-type order) :long) -1 1)
+                   volume (aref (stock-open stock) *current-date*))))
+    ;; pay transaction fee
+    (- amount (* *transaction-cost-factor* amount))))
+
+(defmethod order-close ((order order) (stock stock))
+  ;; check if volume is available for short
+  (when (and (not (eql (order-type order) :long))
+             (< (aref (stock-volume stock) *current-date*) (order-volume order)))
+    ;; todo signal something
+    (return-from order-close 0))
+  (setf (order-end order) *current-date*)
+  ;; buy/sell at closing time
+  (let ((amount (* (if (eql (order-type order) :long) 1 -1)
+                   (order-volume order) (aref (stock-close stock) *current-date*))))
+    ;; pay transaction fee
+    (- amount (* *transaction-cost-factor* amount))))
+#+end_src
 * TODO Basic trading algorithm
 * TODO Data visualisation
 ** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
