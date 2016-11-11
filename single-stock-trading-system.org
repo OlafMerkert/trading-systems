@@ -4,11 +4,78 @@
 #+AUTHOR:    Olaf Merkert
 #+EMAIL:     olaf@m-merkert.de
 #+LANGUAGE:  en
-
+#+PROPERTY:  header-args :results silent
 #+TODO: TODO | DONE
 
 * TODO Introduction
-* TODO Importing data
+We wish to develop a basic trading system, which can watch a single stock and keep track of a single position an said stock.
+
+Our language of choice is Common Lisp, we start by loading the required dependencies.
+#+begin_src lisp
+(ql:quickload '(ol-utils drakma cl-csv parse-number))
+#+end_src
+* DONE Importing data
+We begin by downloading the CSV data and parsing it. Notice that months are given first and use numbers 0-11. For days, the usual numbering 1-31 is used.
+#+begin_src lisp
+(defpar *stock-csv-data*
+        (cl-csv:read-csv
+         (drakma:http-request "http://chart.finance.yahoo.com/table.csv?s=SPY&a=0&b=1&c=2000&d=11&e=31&f=2010&g=d&ignore=.csv"
+                              :want-stream t :close t)))
+#+end_src
+
+#+begin_src lisp :results replace value 
+(subseq *stock-csv-data* 0 10)
+#+end_src
+
+#+RESULTS:
+|       Date |       Open |       High |        Low |      Close |    Volume |  Adj Close |
+| 2010-12-31 | 125.529999 | 125.870003 | 125.330002 |     125.75 |  91218900 | 111.772075 |
+| 2010-12-30 | 125.800003 | 126.129997 | 125.529999 | 125.720001 |  76616900 |  111.74541 |
+| 2010-12-29 | 125.980003 | 126.199997 | 125.900002 | 125.919998 |  58033100 | 111.923176 |
+| 2010-12-28 | 125.900002 | 125.949997 |     125.50 | 125.830002 |  55309100 | 111.843184 |
+| 2010-12-27 | 125.129997 | 125.769997 | 125.040001 | 125.650002 |  58126000 | 111.683192 |
+| 2010-12-23 | 125.639999 | 125.779999 | 125.290001 | 125.599998 |  70053700 | 111.638747 |
+| 2010-12-22 | 125.480003 |     125.82 | 125.410004 | 125.779999 |  78878100 | 111.798739 |
+| 2010-12-21 | 124.989998 | 125.470001 | 124.870003 | 125.389999 |  94965500 |  111.45209 |
+| 2010-12-20 | 124.639999 | 124.900002 | 123.980003 | 124.599998 | 119085500 | 110.749903 |
+
+The data is still of type string. We have 7 columns, but we only need Open, High, Low, Close and Volume.
+
+We define a new class to hold this data. We keep each column in a separate array/vector.
+#+begin_src lisp
+(defclass/f stock ()
+  (stock-ticker
+   stock-open stock-high stock-low stock-close stock-volume))
+
+(defmethod print-object ((object stock) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (stock-ticker stock-open)
+        object
+      (format stream "~a ~a" stock-ticker (length stock-open))))
+  object)
+
+(defun csv->stock (ticker stock-csv-data)
+  (iter (for event in (rest stock-csv-data)) ; remove header
+        (collect (parse-number:parse-number (elt event 1)) into stock-open result-type vector)
+        (collect (parse-number:parse-number (elt event 2)) into stock-high result-type vector)
+        (collect (parse-number:parse-number (elt event 3)) into stock-low result-type vector)
+        (collect (parse-number:parse-number (elt event 4)) into stock-close result-type vector)
+        (collect (parse-number:parse-number (elt event 5)) into stock-volume result-type vector)
+        (finally (return (make-instance 'stock
+                                        :stock-ticker ticker
+                                        :stock-open stock-open
+                                        :stock-high stock-high
+                                        :stock-low stock-low
+                                        :stock-close stock-close
+                                        :stock-volume stock-volume)))))
+
+(defpar *current-stock* (csv->stock "SPY" *stock-csv-data*))
+#+end_src
+For now, we ignore the concrete dates and just use integers to refer to dates. Note that higher index means earlier date.
+** TODO Subclass for filtering to past data
+
 * TODO Trading system
 * TODO Basic trading algorithm
 * TODO Data visualisation
+** Candidates
+*** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
