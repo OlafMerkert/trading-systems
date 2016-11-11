@@ -12,7 +12,7 @@ We wish to develop a basic trading system, which can watch a single stock and ke
 
 Our language of choice is Common Lisp, we start by loading the required dependencies.
 #+begin_src lisp
-(ql:quickload '(ol-utils drakma cl-csv parse-number))
+(ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot))
 #+end_src
 * DONE Importing data
 We begin by downloading the CSV data and parsing it. Notice that months are given first and use numbers 0-11. For days, the usual numbering 1-31 is used.
@@ -45,17 +45,19 @@ We define a new class to hold this data. We keep each column in a separate array
 #+begin_src lisp
 (defclass/f stock ()
   (stock-ticker
+   stock-date
    stock-open stock-high stock-low stock-close stock-volume))
 
 (defmethod print-object ((object stock) stream)
   (print-unreadable-object (object stream :type t)
     (with-slots (stock-ticker stock-open)
         object
-      (format stream "~a ~a" stock-ticker (length stock-open))))
+      (format stream "~a ~a" stock-ticker (length stock-date))))
   object)
 
 (defun csv->stock (ticker stock-csv-data)
   (iter (for event in (rest stock-csv-data)) ; remove header
+        (collect (elt event 0) into stock-date result-type vector)
         (collect (parse-number:parse-number (elt event 1)) into stock-open result-type vector)
         (collect (parse-number:parse-number (elt event 2)) into stock-high result-type vector)
         (collect (parse-number:parse-number (elt event 3)) into stock-low result-type vector)
@@ -63,6 +65,7 @@ We define a new class to hold this data. We keep each column in a separate array
         (collect (parse-number:parse-number (elt event 5)) into stock-volume result-type vector)
         (finally (return (make-instance 'stock
                                         :stock-ticker ticker
+                                        :stock-date stock-date
                                         :stock-open stock-open
                                         :stock-high stock-high
                                         :stock-low stock-low
@@ -77,5 +80,22 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
 * TODO Trading system
 * TODO Basic trading algorithm
 * TODO Data visualisation
-** Candidates
-*** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
+** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
+** With gnuplot
+#+begin_src lisp
+(eazy-gnuplot:with-plots (*standard-output* :debug nil)
+  (eazy-gnuplot:gp-setup :terminal '(pngcairo) :output "plot-1.png" :bars 2)
+  (eazy-gnuplot:plot (lambda ()
+                       (map nil (lambda (d o l h c)
+                                  ;; date open low high close
+                                  (format t "~&~A ~A ~A ~A ~A" d o l h c))
+                            (stock-date *current-stock*)
+                            (stock-open *current-stock*)
+                            (stock-low *current-stock*)
+                            (stock-high *current-stock*)
+                            (stock-close *current-stock*)))
+                     :with 'financebars))
+#+end_src
+
+file:plot-1.png
+*** TODO fix date format for gnuplot
