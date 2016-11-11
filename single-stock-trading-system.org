@@ -83,19 +83,39 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
 ** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
 ** With gnuplot
 #+begin_src lisp
-(eazy-gnuplot:with-plots (*standard-output* :debug nil)
-  (eazy-gnuplot:gp-setup :terminal '(pngcairo) :output "plot-1.png" :bars 2)
+(defun gnuplot-date-tranform (dashed-date)
+  (format nil "~A/~A/~A"
+          (subseq dashed-date 5 7)
+          (subseq dashed-date 8 10)
+          (subseq dashed-date 0 4)))
+
+(defgeneric plot-object (object))
+
+(defmethod plot-object ((stock stock))
   (eazy-gnuplot:plot (lambda ()
                        (map nil (lambda (d o l h c)
                                   ;; date open low high close
-                                  (format t "~&~A ~A ~A ~A ~A" d o l h c))
-                            (stock-date *current-stock*)
-                            (stock-open *current-stock*)
-                            (stock-low *current-stock*)
-                            (stock-high *current-stock*)
-                            (stock-close *current-stock*)))
+                                  (format t "~&~A ~A ~A ~A ~A" (gnuplot-date-tranform d) o l h c))
+                            (stock-date stock)
+                            (stock-open stock)
+                            (stock-low stock)
+                            (stock-high stock)
+                            (stock-close stock)))
+                     :using '(0 2 3 4 5)
                      :with 'financebars))
+
+(defun plot* (output &rest objects)
+  (eazy-gnuplot:with-plots (*standard-output* :debug nil)
+    (eazy-gnuplot:gp-setup :terminal '(pngcairo) :output output :bars 2)
+    (dolist (o objects)
+      (plot-object o)))
+  output)
 #+end_src
 
-file:plot-1.png
-*** TODO fix date format for gnuplot
+#+begin_src lisp
+(plot* "plot-1.png" *current-stock*)
+#+end_src
+
+[[file:plot-1.png]]
+
+*** DONE fix date format for gnuplot
