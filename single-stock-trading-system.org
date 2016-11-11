@@ -95,41 +95,40 @@ We store the date in a special variable, and likewise the current order. On init
 (defpar *transaction-cost-factor* 0.0025)
 
 (defclass/f order ()
-  (order-start order-end order-volume order-type))
+  (order-stock order-type order-start order-end order-volume))
 
-(defun order-create (&optional (order-type :long))
-  (make-instance 'order :order-type order-type
-                 :order-start nil
-                 :order-end nil
-                 :order-volume nil))
+(defun order-create (stock &optional (order-type :long))
+  (make-instance 'order
+                 :order-stock stock :order-type order-type
+                 :order-start nil :order-end nil :order-volume nil))
 #+end_src
 
 
 #+begin_src lisp
-(defmethod order-open ((order order) (stock stock) (volume integer))
+(defmethod order-open ((order order) (volume integer))
   ;; check if volume is available for long
   (when (and (eql (order-type order) :long)
-             (< (aref (stock-volume stock) *current-date*) volume))
+             (< (aref (stock-volume (order-stock order)) *current-date*) volume))
     ;; todo signal something
-    (return-from order-open 0))
+    (return-from order-open nil))
   (setf (order-start order) *current-date*
         (order-volume order) volume)
   ;; buy/sell at opening time
   (let ((amount (* (if (eql (order-type order) :long) -1 1)
-                   volume (aref (stock-open stock) *current-date*))))
+                   volume (aref (stock-open (order-stock order)) *current-date*))))
     ;; pay transaction fee
     (- amount (* *transaction-cost-factor* amount))))
 
-(defmethod order-close ((order order) (stock stock))
+(defmethod order-close ((order order))
   ;; check if volume is available for short
   (when (and (not (eql (order-type order) :long))
-             (< (aref (stock-volume stock) *current-date*) (order-volume order)))
+             (< (aref (stock-volume (order-stock order)) *current-date*) (order-volume order)))
     ;; todo signal something
-    (return-from order-close 0))
+    (return-from order-close nil))
   (setf (order-end order) *current-date*)
   ;; buy/sell at closing time
   (let ((amount (* (if (eql (order-type order) :long) 1 -1)
-                   (order-volume order) (aref (stock-close stock) *current-date*))))
+                   (order-volume order) (aref (stock-close (order-stock order)) *current-date*))))
     ;; pay transaction fee
     (- amount (* *transaction-cost-factor* amount))))
 #+end_src
