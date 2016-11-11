@@ -1,0 +1,14 @@
+# -*- ispell-dictionary: "en_GB"
+
+#+TITLE:     Basic trading system for a single stock
+#+AUTHOR:    Olaf Merkert
+#+EMAIL:     olaf@m-merkert.de
+#+LANGUAGE:  en
+
+#+TODO: TODO | DONE
+
+* TODO Introduction
+* TODO Importing data
+* TODO Trading system
+* TODO Basic trading algorithm
+* TODO Data visualisation
