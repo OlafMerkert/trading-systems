@@ -517,4 +517,14 @@ file:plot-2.png
 
 *** TODO fix date printing
 *** DONE fix timeline direction
-** TODO Plotting trader performance
+** DONE Plotting trader performance
+#+begin_src lisp
+(defmethod plot-object ((trader reporting-trader))
+  (eazy-gnuplot:plot (lambda ()
+                       (map nil (lambda (d b) 
+                                  (format t "~%~A ~A" (gnuplot-date-tranform d) b))
+                            (reverse (stock-date (trader-stock trader)))
+                            (reverse (balance-report trader))))
+                     :using '(0 2)
+                     :with 'points))
+#+end_src
