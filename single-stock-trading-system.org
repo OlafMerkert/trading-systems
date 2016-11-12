@@ -48,12 +48,13 @@ We define a new class to hold this data. We keep each column in a separate array
    stock-date
    stock-open stock-high stock-low stock-close stock-volume))
 
-(defmethod print-object ((object stock) stream)
-  (print-unreadable-object (object stream :type t)
-    (with-slots (stock-ticker stock-date)
-        object
-      (format stream "~a ~a" stock-ticker (length stock-date))))
-  object)
+(defmethod print-object ((stock stock) stream)
+  (print-unreadable-object (stock stream :type t)
+    (with-accessors ((stock-ticker stock-ticker)
+                     (stock-date stock-date))
+        stock
+      (format stream "~a LEN: ~a" stock-ticker (length stock-date))))
+  stock)
 
 (defun csv->stock (ticker stock-csv-data)
   (iter (for event in (rest stock-csv-data)) ; remove header
@@ -280,8 +281,15 @@ and maybe also collect some statistics. We model this with a trader object. A tr
 
 #+begin_src lisp
 (plot* "plot-1.png" *current-stock*)
+(plot* "plot-2.png" (stock-subseq *current-stock* 2000))
 #+end_src
 
 [[file:plot-1.png]]
 
+file:plot-2.png
+
 *** DONE fix date format for gnuplot
+
+*** TODO fix date printing
+
+*** TODO fix timeline direction
