@@ -226,7 +226,7 @@ and maybe also collect some statistics. We model this with a trader object. A tr
               (setf (trader-balance trader) new-balance)
               t))))))
 
-(defmethod settle ((trader trader) &optional final)
+(defmethod conclude ((trader trader) &optional final)
   (when (busy-p trader)
     (with-accessors ((current-order current-order)) trader
       (let ((amount (order-close current-order)))
@@ -242,9 +242,40 @@ and maybe also collect some statistics. We model this with a trader object. A tr
                 (progn
                   (setf (trader-balance trader) new-balance)
                   t))))))))
-
-
 #+end_src
+
+** TODO Reporting for trading
+One important feature is still missing from the =trader= class: keeping track of which orders went through and how the balance evolved over time. To implement this, we hook into balance changes and watch for successfully concluded orders.
+#+begin_src lisp
+(defclass/f reporting-trader (trader)
+  (balance-report
+   order-list))
+
+(defmethod initialize-instance :after ((reporting-trader reporting-trader) &key)
+  ;; order-list is a simple list
+  (setf (order-list reporting-trader) nil)
+  ;; balance-report should be an array with length matching the stock history
+  (let ((history-length (length (stock-date (trader-stock reporting-trader)))))
+    (setf (balance-report reporting-trader)
+          (make-array history-length :initial-element nil))
+    ;; we initialise the last entry (first date) with initial balance
+    (setf (aref (balance-report reporting-trader) (- history-length 1))
+          (trader-balance reporting-trader))))
+
+;; store data everytime the balance changes
+(defmethod (setf trader-balance) :after (value (reporting-trader reporting-trader))
+  (setf (aref (balance-report reporting-trader) *current-date*) value))
+
+;; we find out if a order was successful when it concludes
+(defmethod conclude :around ((reporting-trader reporting-trader) &optional final)
+  (let ((order (current-order reporting-trader))
+        (result (call-next-method)))
+    (when result
+      (push order (order-list reporting-trader)))
+    result))
+#+end_src
+
+*** TODO clean up collected reporting data
 * TODO Basic trading algorithm
 * TODO Data visualisation
 ** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
