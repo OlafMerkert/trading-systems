@@ -367,6 +367,64 @@ The initial balance for the trader will be set by the simulation function.
       (prepare-report trader)
       (trader-balance trader))))
 #+end_src
+* DONE Data visualisation
+** DONE Plotting financial data
+#+begin_src lisp
+(defun gnuplot-date-tranform (dashed-date)
+  (format nil "~A/~A/~A"
+          (subseq dashed-date 5 7)
+          (subseq dashed-date 8 10)
+          (subseq dashed-date 0 4)))
+
+(defgeneric plot-object (object))
+
+(defmethod plot-object ((stock stock))
+  ;; (eazy-gnuplot:gp :set :xdata :time)
+  ;; (eazy-gnuplot:gp :set :timefmt "%m/%d/%y")
+  (eazy-gnuplot:plot (lambda ()
+                       (map nil (lambda (d o l h c)
+                                  ;; date open low high close
+                                  (format t "~&~A ~A ~A ~A ~A" (gnuplot-date-tranform d) o l h c))
+                            (reverse (stock-date stock))
+                            (reverse (stock-open stock))
+                            (reverse (stock-low stock))
+                            (reverse (stock-high stock))
+                            (reverse (stock-close stock))))
+                     :using '(0 2 3 4 5)
+                     :with 'financebars))
+
+(defun plot* (output &rest objects)
+  (eazy-gnuplot:with-plots (*standard-output* :debug nil)
+    (eazy-gnuplot:gp-setup :terminal '(pngcairo) :output output :bars 2)
+    (dolist (o objects)
+      (plot-object o)))
+  output)
+#+end_src
+
+#+begin_src lisp
+(plot* "plot-1.png" *current-stock*)
+(plot* "plot-2.png" (stock-subseq *current-stock* 2000))
+#+end_src
+
+[[file:plot-1.png]]
+
+file:plot-2.png
+
+*** DONE fix date format for gnuplot
+
+*** TODO fix date printing
+*** DONE fix timeline direction
+** DONE Plotting trader performance
+#+begin_src lisp
+(defmethod plot-object ((trader reporting-trader))
+  (eazy-gnuplot:plot (lambda ()
+                       (map nil (lambda (d b) 
+                                  (format t "~%~A ~A" (gnuplot-date-tranform d) b))
+                            (reverse (stock-date (trader-stock trader)))
+                            (reverse (balance-report trader))))
+                     :using '(0 2)
+                     :with 'points))
+#+end_src
 * TODO Basic trading algorithm
 The idea for my trading algorithm is to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
 ** TODO Fitting quadratic functions
@@ -475,63 +533,4 @@ Now that everything is in place, let's try the trader.
 
 #+begin_src lisp
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
-#+end_src
-
-* DONE Data visualisation
-** DONE Plotting financial data
-#+begin_src lisp
-(defun gnuplot-date-tranform (dashed-date)
-  (format nil "~A/~A/~A"
-          (subseq dashed-date 5 7)
-          (subseq dashed-date 8 10)
-          (subseq dashed-date 0 4)))
-
-(defgeneric plot-object (object))
-
-(defmethod plot-object ((stock stock))
-  ;; (eazy-gnuplot:gp :set :xdata :time)
-  ;; (eazy-gnuplot:gp :set :timefmt "%m/%d/%y")
-  (eazy-gnuplot:plot (lambda ()
-                       (map nil (lambda (d o l h c)
-                                  ;; date open low high close
-                                  (format t "~&~A ~A ~A ~A ~A" (gnuplot-date-tranform d) o l h c))
-                            (reverse (stock-date stock))
-                            (reverse (stock-open stock))
-                            (reverse (stock-low stock))
-                            (reverse (stock-high stock))
-                            (reverse (stock-close stock))))
-                     :using '(0 2 3 4 5)
-                     :with 'financebars))
-
-(defun plot* (output &rest objects)
-  (eazy-gnuplot:with-plots (*standard-output* :debug nil)
-    (eazy-gnuplot:gp-setup :terminal '(pngcairo) :output output :bars 2)
-    (dolist (o objects)
-      (plot-object o)))
-  output)
-#+end_src
-
-#+begin_src lisp
-(plot* "plot-1.png" *current-stock*)
-(plot* "plot-2.png" (stock-subseq *current-stock* 2000))
-#+end_src
-
-[[file:plot-1.png]]
-
-file:plot-2.png
-
-*** DONE fix date format for gnuplot
-
-*** TODO fix date printing
-*** DONE fix timeline direction
-** DONE Plotting trader performance
-#+begin_src lisp
-(defmethod plot-object ((trader reporting-trader))
-  (eazy-gnuplot:plot (lambda ()
-                       (map nil (lambda (d b) 
-                                  (format t "~%~A ~A" (gnuplot-date-tranform d) b))
-                            (reverse (stock-date (trader-stock trader)))
-                            (reverse (balance-report trader))))
-                     :using '(0 2)
-                     :with 'points))
 #+end_src
