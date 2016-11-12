@@ -88,6 +88,10 @@ For our trading algorithm, we need to restrict our view to the past. Sometimes i
   (parent start end))
 
 (defun stock-subseq (stock start &optional end)
+  ;; if end is larger than sequence length, just go to sequence end
+  (let1 (len (length (stock-date stock)))
+    (unless (<= end len)
+      (setf end len)))
   (make-instance 'stock-subseq :parent stock :start start :end end))
 
 (defmethod stock-ticker ((stock-subseq stock-subseq))
@@ -325,12 +329,14 @@ The initial balance for the trader will be set by the simulation function.
          (history-length (length (stock-date stock))))
     (let ((*current-date* (- history-length 1)))
       (setf (trader-balance trader) initial-balance)
-      (incf *current-date* start-after)
+      (decf *current-date* start-after)
       ;; main trading loop: call the trade every day
       (do ()
           ((< *current-date* 0))
         (trade trader)
-        (incf *current-date*))
+        (decf *current-date*))
+      ;; reset date to 0
+      (setf *current-date* 0)
       ;; if trader still has an order, conclude it
       (when (busy-p trader)
         (conclude trader t))
@@ -408,7 +414,7 @@ The =trade= method will be called every day (before open) and has to make a deci
             ;; flip a coin to see if we want to trust the heuristic
             (coin (flip-coin)))
         (when (or (and (not coin) (eql 0 highest-bin))
-                  (and coin (eql 1 downward-trend)))
+                  (and coin (eql 1 highest-bin)))
           ;; get out of here
           (conclude trader)))
       ;; if we have no trade going, check the open data
@@ -420,7 +426,7 @@ The =trade= method will be called every day (before open) and has to make a deci
         (cond ((and coin (eql 0 highest-bin))
                ;; let's do an optimistic investment
                (long trader *optimistic-investment-factor*))
-              ((and (not coin) (eql 1 downward-trend))
+              ((and (not coin) (eql 1 highest-bin))
                ;; let's be more cautious when investing
                (long trader *pessimistic-investment-factor*))))))
 #+end_src
@@ -433,7 +439,7 @@ Now that everything is in place, let's try the trader.
                        :observation-frame-length 10
                        :trader-stock *current-stock*))
 
-(simulate-trader *current-trader* 100000 :start-after 10)
+(simulate-trader *current-trader* 100000 :start-after 20)
 #+end_src
 
 * TODO Data visualisation
