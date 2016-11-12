@@ -344,15 +344,17 @@ The standard method for fitting a polynomial to some data is using Least-Squares
 (defgeneric plot-object (object))
 
 (defmethod plot-object ((stock stock))
+  ;; (eazy-gnuplot:gp :set :xdata :time)
+  ;; (eazy-gnuplot:gp :set :timefmt "%m/%d/%y")
   (eazy-gnuplot:plot (lambda ()
                        (map nil (lambda (d o l h c)
                                   ;; date open low high close
                                   (format t "~&~A ~A ~A ~A ~A" (gnuplot-date-tranform d) o l h c))
-                            (stock-date stock)
-                            (stock-open stock)
-                            (stock-low stock)
-                            (stock-high stock)
-                            (stock-close stock)))
+                            (reverse (stock-date stock))
+                            (reverse (stock-open stock))
+                            (reverse (stock-low stock))
+                            (reverse (stock-high stock))
+                            (reverse (stock-close stock))))
                      :using '(0 2 3 4 5)
                      :with 'financebars))
 
@@ -376,7 +378,5 @@ file:plot-2.png
 *** DONE fix date format for gnuplot
 
 *** TODO fix date printing
-
-*** TODO fix timeline direction
-
+*** DONE fix timeline direction
 ** TODO Plotting trader performance
