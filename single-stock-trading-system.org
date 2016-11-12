@@ -50,7 +50,7 @@ We define a new class to hold this data. We keep each column in a separate array
 
 (defmethod print-object ((object stock) stream)
   (print-unreadable-object (object stream :type t)
-    (with-slots (stock-ticker stock-open)
+    (with-slots (stock-ticker stock-date)
         object
       (format stream "~a ~a" stock-ticker (length stock-date))))
   object)
@@ -75,8 +75,22 @@ We define a new class to hold this data. We keep each column in a separate array
 (defpar *current-stock* (csv->stock "SPY" *stock-csv-data*))
 #+end_src
 For now, we ignore the concrete dates and just use integers to refer to dates. Note that higher index means earlier date.
-** TODO Subclass for filtering to past data
+** DONE Subclass for filtering to past data
+#+begin_src lisp
+(defclass/f stock-subseq (stock)
+  (parent start end))
 
+(defun stock-subseq (stock start &optional end)
+  (make-instance 'stock-subseq :parent stock :start start :end end))
+
+(defmethod stock-ticker ((stock-subseq stock-subseq))
+  (stock-ticker (parent stock-subseq)))
+
+;; bind multi copies the definition for stock-date for the other slots
+(bind-multi ((stock-date stock-date stock-open stock-high stock-low stock-close stock-volume))
+  (defmethod stock-date ((stock-subseq stock-subseq))
+    (subseq (stock-date (parent stock-subseq)) (start stock-subseq) (end stock-subseq))))
+#+end_src
 * TODO Trading system
 We need to be able to implement orders
 
