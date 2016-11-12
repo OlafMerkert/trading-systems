@@ -470,6 +470,17 @@ Now that everything is in place, let's try the trader.
 (simulate-trader *current-trader* 100000 :start-after 20)
 #+end_src
 
+#+begin_src lisp
+(plot* "plot-3.png" *current-trader*)
+(format nil "~F" (trader-balance *current-trader*))
+(balance-report *current-trader*)
+#+end_src
+*** DONE investigate why we make so much money
+
+#+begin_src lisp
+(mapcar #'order-duration (reverse (order-list *current-trader*)))
+#+end_src
+
 * TODO Data visualisation
 ** DONE Plotting financial data
 #+begin_src lisp
