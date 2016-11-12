@@ -92,6 +92,8 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
   (defmethod stock-date ((stock-subseq stock-subseq))
     (subseq (stock-date (parent stock-subseq)) (start stock-subseq) (end stock-subseq))))
 #+end_src
+
+
 * TODO Trading system
 We need to implement orders. For now we restrict to the single stock case.
 
@@ -244,7 +246,7 @@ and maybe also collect some statistics. We model this with a trader object. A tr
                   t))))))))
 #+end_src
 
-** TODO Reporting for trading
+** DONE Reporting for trading
 One important feature is still missing from the =trader= class: keeping track of which orders went through and how the balance evolved over time. To implement this, we hook into balance changes and watch for successfully concluded orders.
 #+begin_src lisp
 (defclass/f reporting-trader (trader)
@@ -275,7 +277,21 @@ One important feature is still missing from the =trader= class: keeping track of
     result))
 #+end_src
 
-*** TODO clean up collected reporting data
+If we do not trade every day, then there will be gaps in the =balance-report= vector. We need to fill these up, by copying the balance from the previous day. For convenience, we immediately return the vector.
+
+The order list should not require any further fixup.
+#+begin_src lisp
+(defmethod prepare-report ((reporting-trader reporting-trader))
+  (with-accessors ((balance-report balance-report)) reporting-trader
+    (let1 (history-length (length balance-report))
+      ;; make sure the initial balance is present
+      (assert (aref balance-report (- history-length 1)))
+      (do ((i (- history-length 2) (- i 1))
+           (j (- history-length 1) i))
+          ((< i 0) balance-report)
+        (unless (aref balance-report i)
+          (setf (aref balance-report i) (aref balance-report j)))))))
+#+end_src
 * TODO Basic trading algorithm
 * TODO Data visualisation
 ** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
