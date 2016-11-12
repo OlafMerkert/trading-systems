@@ -77,6 +77,7 @@ We define a new class to hold this data. We keep each column in a separate array
 #+end_src
 For now, we ignore the concrete dates and just use integers to refer to dates. Note that higher index means earlier date.
 ** DONE Subclass for filtering to past data
+For our trading algorithm, we need to restrict our view to the past. Sometimes it may be useful to generally restrict to some time interval.
 #+begin_src lisp
 (defclass/f stock-subseq (stock)
   (parent start end))
@@ -92,7 +93,6 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
   (defmethod stock-date ((stock-subseq stock-subseq))
     (subseq (stock-date (parent stock-subseq)) (start stock-subseq) (end stock-subseq))))
 #+end_src
-
 
 * TODO Trading system
 We need to implement orders. For now we restrict to the single stock case.
@@ -291,6 +291,19 @@ The order list should not require any further fixup.
           ((< i 0) balance-report)
         (unless (aref balance-report i)
           (setf (aref balance-report i) (aref balance-report j)))))))
+#+end_src
+** DONE Accessing past data
+The trading algorithm should be given only data from the past. We define some methods that take care of this filtering. We can only restrict the number of data points returned.
+#+begin_src lisp
+(defmethod past-data ((stock stock) &optional count)
+  (stock-subseq stock (+ *current-date* 1) (if count (+ *current-date* count 1))))
+
+(defmethod past-data ((stock-subseq stock-subseq) &optional count)
+  (let ((start (max (+ *current-date* 1) (start stock-subseq))))
+    (stock-subseq (parent stock-subseq) start
+                  (if count
+                      (min (+ start count) (end stock-subseq))
+                      (end stock-subseq)))))
 #+end_src
 * TODO Basic trading algorithm
 * TODO Data visualisation
