@@ -512,25 +512,32 @@ The =trade= method will be called every day (before open) and has to make a deci
                ;; let's be more cautious when investing
                (long trader *pessimistic-investment-factor*))))))
 #+end_src
+*** TODO implement shorting
+As the stock here seems to lose value most of the time, this could be useful.
 ** TODO Trial run and analysis
-Now that everything is in place, let's try the trader.
+Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp
+(setf *random-trader-confidence* 4/7
+      ,*optimistic-investment-factor* 2/3
+      ,*pessimistic-investment-factor* 1/3)
+
 (defpar *current-trader*
         (make-instance 'randomised-average-cmp-trader
-                       :observation-frame-length 10
+                       :observation-frame-length 100
                        :trader-stock *current-stock*))
 
-(simulate-trader *current-trader* 100000 :start-after 20)
+(simulate-trader *current-trader* 100000
+                 :start-after (observation-frame-length *current-trader*))
 #+end_src
 
 #+begin_src lisp
 (plot* "plot-3.png" *current-trader*)
 (format nil "~F" (trader-balance *current-trader*))
-(balance-report *current-trader*)
+;; (balance-report *current-trader*)
 #+end_src
-*** DONE investigate why we make so much money
 
+We can also have a look at how long we usually hold a stock
 #+begin_src lisp
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
 #+end_src
