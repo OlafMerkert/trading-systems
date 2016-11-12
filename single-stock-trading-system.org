@@ -303,6 +303,20 @@ The order list should not require any further fixup.
         (unless (aref balance-report i)
           (setf (aref balance-report i) (aref balance-report j)))))))
 #+end_src
+** TODO Debugging helper class
+#+begin_src lisp
+(defclass debugging-trader ()
+  ())
+
+(defmethod long :before ((debugging-trader debugging-trader) part)
+  (dbug "Started long trade on date ~A for part ~A" *current-date* part))
+
+(defmethod short :before ((debugging-trader debugging-trader) part)
+  (dbug "Started short trade on date ~A for part ~A" *current-date* part))
+
+(defmethod conclude :before ((debugging-trader debugging-trader) &optional final)
+   (dbug "Concluded trade ~A on date ~A " (current-order debugging-trader) *current-date*))
+#+end_src
 ** DONE Accessing past data
 The trading algorithm should be given only data from the past. We define some methods that take care of this filtering. We can only restrict the number of data points returned.
 #+begin_src lisp
