@@ -310,6 +310,30 @@ The trading algorithm should be given only data from the past. We define some me
                       (min (+ start count) (end stock-subseq))
                       (end stock-subseq)))))
 #+end_src
+** DONE Running the trader
+We now want to simulate the trader on the market. A trader is defined by subclassing =trader= and implementing the =trade= method (which should take no further arguments). The simulation can also be started at a later time.
+
+The initial balance for the trader will be set by the simulation function.
+#+begin_src lisp
+(defgeneric trade (trader))
+
+(defun simulate-trader (trader initial-balance &key (start-after 0))
+  (let* ((stock (trader-stock trader))
+         (history-length (length (stock-date stock))))
+    (let ((*current-date* (- history-length 1)))
+      (setf (trader-balance trader) initial-balance)
+      (incf *current-date* start-after)
+      ;; main trading loop: call the trade every day
+      (do ()
+          ((< *current-date* 0))
+        (trade trader)
+        (incf *current-date*))
+      ;; if trader still has an order, conclude it
+      (when (busy-p trader)
+        (conclude trader t))
+      (prepare-report trader)
+      (trader-balance trader))))
+#+end_src
 * TODO Basic trading algorithm
 The idea for my trading algorithm is to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
 ** TODO Fitting quadratic functions
@@ -364,6 +388,8 @@ the position of the subsequence with largest average."
          (bins-average (mapcar #'average bins))) ; can't just use a sum because of different lengths
     (argmax bins-average)))
 #+end_src
+
+Note that in case of equal averages, the first bin is going to be preferred.
 
 The =trade= method will be called every day (before open) and has to make a decision whether to short, long or conclude. For now, we only to long trades. When we do investments, we try to be more careful when we actually observed a downward trend.
 #+begin_src lisp
