@@ -12,13 +12,9 @@ We wish to develop a basic trading system, which can watch a single stock and ke
 
 Our language of choice is Common Lisp, we start by loading the required dependencies.
 #+begin_src lisp
-(ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot lisp-matrix))
+(ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot))
 #+end_src
 
-Some bug in lisp matrix requires that we import all its symbols into our package. There is one conflict with the =copy= function from =ol-utils=, though.
-#+begin_src lisp
-(use-package :lisp-matrix)
-#+end_src
 * DONE Importing data
 We begin by downloading the CSV data and parsing it. Notice that months are given first and use numbers 0-11. For days, the usual numbering 1-31 is used.
 #+begin_src lisp
@@ -103,7 +99,7 @@ For our trading algorithm, we need to restrict our view to the past. Sometimes i
     (subseq (stock-date (parent stock-subseq)) (start stock-subseq) (end stock-subseq))))
 #+end_src
 
-* TODO Trading system
+* DONE Trading system
 We need to implement orders. For now we restrict to the single stock case.
 
 + An order is long or short, on some specific stock
@@ -318,7 +314,7 @@ The order list should not require any further fixup.
         (unless (aref balance-report i)
           (setf (aref balance-report i) (aref balance-report j)))))))
 #+end_src
-** TODO Debugging helper class
+** DONE Debugging helper class
 #+begin_src lisp
 (defclass debugging-trader ()
   ())
@@ -481,7 +477,7 @@ Now that everything is in place, let's try the trader.
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
 #+end_src
 
-* TODO Data visualisation
+* DONE Data visualisation
 ** DONE Plotting financial data
 #+begin_src lisp
 (defun gnuplot-date-tranform (dashed-date)
