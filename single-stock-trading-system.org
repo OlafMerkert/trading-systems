@@ -250,12 +250,11 @@ and maybe also collect some statistics. We model this with a trader object. A tr
           (let ((new-balance (+ (trader-balance trader) amount)))
             (if (and (< new-balance 0) (not final))
                 ;; abort
+                nil
+                ;; unset order, update balance
                 (progn
-                  (setf current-order nil)
-                  nil)
-                ;; update balance
-                (progn
-                  (setf (trader-balance trader) new-balance)
+                  (setf current-order nil
+                        (trader-balance trader) new-balance)
                   t))))))))
 #+end_src
 
