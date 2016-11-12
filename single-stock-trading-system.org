@@ -4,7 +4,7 @@
 #+AUTHOR:    Olaf Merkert
 #+EMAIL:     olaf@m-merkert.de
 #+LANGUAGE:  en
-#+PROPERTY:  header-args :results silent
+#+PROPERTY:  header-args :results silent :tangle yes
 #+TODO: TODO | DONE
 
 * TODO Introduction
@@ -165,7 +165,7 @@ We add a function that determines the maximal volume available to buy for a give
   (stock-available-volume stock (if (eql (order-type order) :long) :open :close) amount))
 #+end_src
 
-** TODO Trading
+** DONE Trading
 For actual trading, we need to keep track of
 + current order
 + current balance
