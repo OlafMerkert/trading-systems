@@ -163,6 +163,87 @@ We add a function that determines the maximal volume available to buy for a give
   (assert (eql stock (order-stock order)))
   (stock-available-volume stock (if (eql (order-type order) :long) :open :close) amount))
 #+end_src
+
+** TODO Trading
+For actual trading, we need to keep track of
++ current order
++ current balance
+and maybe also collect some statistics. We model this with a trader object. A trader can only have one position at a time. We assume the trader is not completely stupid, so he will avoid always negative balance -- until time is over, and he may be forced to close a shorted position.
+#+begin_src lisp
+(defclass/f trader ()
+  (trader-stock
+   trader-balance
+   (current-order :initarg :current-order
+                  :initform nil
+                  :accessor current-order)))
+
+(defmethod busy-p ((trader trader))
+  (current-order trader))
+
+(defmethod short ((trader trader) part)
+  ;; here we need any positive number. keep in mind that anything
+  ;; significantly larger than 1 is probably rather stupid.
+  (assert (<= 0 part))
+  (unless (busy-p trader)
+    (with-accessors ((current-order current-order)) trader
+      (setf current-order (order-create (trader-stock trader) :short))
+      (let* ((amount (* part (trader-balance trader)))
+             ;; don't do stupid stuff like go over available volume
+             (volume (stock-available-volume (trader-stock trader) :open amount))
+             ;; see if we can afford it
+             (new-balance (+ (trader-balance trader)
+                             (order-open current-order volume))))
+        (if (< new-balance 0)
+            ;; abort
+            (progn
+              (setf current-order nil)
+              nil)
+            ;; update balance
+            (progn
+              (setf (trader-balance trader) new-balance)
+              t))))))
+
+(defmethod long ((trader trader) part)
+  ;; for this type of trade, we need a number between 0 and 1
+  (assert (<= 0 part 1))
+  (unless (busy-p trader)
+    (with-accessors ((current-order current-order)) trader
+      (setf current-order (order-create (trader-stock trader) :long))
+      (let* ((amount (* part (trader-balance trader)))
+             ;; don't do stupid stuff like go over available volume
+             (volume (stock-available-volume (trader-stock trader) :open amount))
+             ;; see if we can afford it
+             (new-balance (+ (trader-balance trader)
+                             (order-open current-order volume))))
+        (if (< new-balance 0)
+            ;; abort
+            (progn
+              (setf current-order nil)
+              nil)
+            ;; update balance
+            (progn
+              (setf (trader-balance trader) new-balance)
+              t))))))
+
+(defmethod settle ((trader trader) &optional final)
+  (when (busy-p trader)
+    (with-accessors ((current-order current-order)) trader
+      (let ((amount (order-close current-order)))
+        ;; possibly `amount' is nil, if not enough volume is available
+        (when amount
+          (let ((new-balance (+ (trader-balance trader) amount)))
+            (if (and (< new-balance 0) (not final))
+                ;; abort
+                (progn
+                  (setf current-order nil)
+                  nil)
+                ;; update balance
+                (progn
+                  (setf (trader-balance trader) new-balance)
+                  t))))))))
+
+
+#+end_src
 * TODO Basic trading algorithm
 * TODO Data visualisation
 ** [[http://ryepup.unwashedmeme.com/lisp/adw-charting/][ADW-Charting - simple chart drawing with Common Lisp]]
