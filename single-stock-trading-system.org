@@ -180,10 +180,14 @@ and maybe also collect some statistics. We model this with a trader object. A tr
 #+begin_src lisp
 (defclass/f trader ()
   (trader-stock
-   trader-balance
+   (trader-balance :initarg :trader-balance
+                   :initform 0
+                   :accessor trader-balance)
    (current-order :initarg :current-order
                   :initform nil
                   :accessor current-order)))
+
+(create-standard-print-object trader trader-stock trader-balance)
 
 (defmethod busy-p ((trader trader))
   (current-order trader))
@@ -255,12 +259,11 @@ and maybe also collect some statistics. We model this with a trader object. A tr
 One important feature is still missing from the =trader= class: keeping track of which orders went through and how the balance evolved over time. To implement this, we hook into balance changes and watch for successfully concluded orders.
 #+begin_src lisp
 (defclass/f reporting-trader (trader)
-  (balance-report
-   order-list))
+  ((balance-report :accessor balance-report)
+   (order-list :initform nil
+               :accessor order-list)))
 
 (defmethod initialize-instance :after ((reporting-trader reporting-trader) &key)
-  ;; order-list is a simple list
-  (setf (order-list reporting-trader) nil)
   ;; balance-report should be an array with length matching the stock history
   (let ((history-length (length (stock-date (trader-stock reporting-trader)))))
     (setf (balance-report reporting-trader)
@@ -420,6 +423,17 @@ The =trade= method will be called every day (before open) and has to make a deci
               ((and (not coin) (eql 1 downward-trend))
                ;; let's be more cautious when investing
                (long trader *pessimistic-investment-factor*))))))
+#+end_src
+
+Now that everything is in place, let's try the trader.
+#+name: rand-av-cmp-trader-test
+#+begin_src lisp
+(defpar *current-trader*
+        (make-instance 'randomised-average-cmp-trader
+                       :observation-frame-length 10
+                       :trader-stock *current-stock*))
+
+(simulate-trader *current-trader* 100000 :start-after 10)
 #+end_src
 
 * TODO Data visualisation
