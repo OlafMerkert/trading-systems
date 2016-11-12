@@ -4,7 +4,7 @@
 #+AUTHOR:    Olaf Merkert
 #+EMAIL:     olaf@m-merkert.de
 #+LANGUAGE:  en
-#+PROPERTY:  header-args :results silent :tangle yes
+#+PROPERTY:  header-args :results silent :tangle yes :exports both
 #+TODO: TODO | DONE
 
 * TODO Introduction
@@ -537,7 +537,10 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 ;; (balance-report *current-trader*)
 #+end_src
 
+file:plot-3.png
+
 We can also have a look at how long we usually hold a stock
 #+begin_src lisp
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
 #+end_src
+
