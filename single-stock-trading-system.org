@@ -124,6 +124,21 @@ The lifecycle of an order is as follows:
   (make-instance 'order
                  :order-stock stock :order-type order-type
                  :order-start nil :order-end nil :order-volume nil))
+
+(defmethod print-object ((object order) stream)
+  (print-unreadable-object (object stream :type t)
+    (with-slots (order-type order-end order-start order-volume)
+        object
+      (if order-end
+          (format stream "~A Duration: ~A Volume: ~A" order-type (- order-start order-end) order-volume)
+          (format stream "~A Start: ~A Volume: ~A" order-type order-start order-volume))))
+  object)
+
+(defmethod order-duration ((order order))
+  (with-slots (order-start order-end) order
+    (if order-end
+        (abs (- order-start order-end))
+        0)))
 #+end_src
 
 For the dates we just use integers, referring to indices for the =stock= datastructure. We store the date in a special variable. Both =order-open= and =order-close= return a number which represents the balance change of our account. This includes already the transaction costs (which depend on =order-volume= and current stock value).
@@ -390,9 +405,6 @@ We look at a moving interval in the past, look at the average in the first and s
 (defun flip-coin ()
   (<= (random 1.0) *random-trader-confidence*))
 
-(defclass/f randomised-average-cmp-trader (reporting-trader)
-  (observation-frame-length))
-
 (defun average (vector)
   (/ (reduce #'+ vector) (length vector)))
 
@@ -417,6 +429,9 @@ The =trade= method will be called every day (before open) and has to make a deci
 #+begin_src lisp
 (defpar *optimistic-investment-factor* 2/3)
 (defpar *pessimistic-investment-factor* 1/2)
+
+(defclass/f randomised-average-cmp-trader (reporting-trader debugging-trader)
+  (observation-frame-length))
 
 (defmethod trade ((trader randomised-average-cmp-trader))
   (if (current-order trader)
@@ -443,7 +458,7 @@ The =trade= method will be called every day (before open) and has to make a deci
                ;; let's be more cautious when investing
                (long trader *pessimistic-investment-factor*))))))
 #+end_src
-
+** TODO Trial run and analysis
 Now that everything is in place, let's try the trader.
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp
