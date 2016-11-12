@@ -92,22 +92,19 @@ For now, we ignore the concrete dates and just use integers to refer to dates. N
     (subseq (stock-date (parent stock-subseq)) (start stock-subseq) (end stock-subseq))))
 #+end_src
 * TODO Trading system
-We need to be able to implement orders
+We need to implement orders. For now we restrict to the single stock case.
 
-+ An order is long or short
++ An order is long or short, on some specific stock
 + The order starts at open, and finishes at close
 + for each we have a starting day
 + starting and finishing both return a number: positive if adding to your account (selling), negative if deducting (buying). Transaction cost is factored in automatically.
-
-For the dates we just use integers, referring to indices for the =stock= datastructure.
-
-We store the date in a special variable, and likewise the current order. On initialisation, we only need to decide 
++ Before committing to an order, we need to check we have the money.
+** DONE Orders
+The lifecycle of an order is as follows:
++ Decide on the stock and whether to long or short it
++ Then try to open the order, see if we can afford it. Possibly decrease the volume.
++ Finally close the order. For short orders, we also need to check if we actually can afford it.
 #+begin_src lisp
-(defvar *current-date* 0)
-(defvar *current-order* 0)
-
-(defpar *transaction-cost-factor* 0.0025)
-
 (defclass/f order ()
   (order-stock order-type order-start order-end order-volume))
 
@@ -117,9 +114,16 @@ We store the date in a special variable, and likewise the current order. On init
                  :order-start nil :order-end nil :order-volume nil))
 #+end_src
 
+For the dates we just use integers, referring to indices for the =stock= datastructure. We store the date in a special variable. Both =order-open= and =order-close= return a number which represents the balance change of our account. This includes already the transaction costs (which depend on =order-volume= and current stock value).
 
+Note we always open orders at "open", and always close orders at "close".
+
+Currently slippage is not modeled, I am not even sure it would factor into this code.
 #+begin_src lisp
-(defmethod order-open ((order order) (volume integer))
+(defvar *current-date* 0)
+(defpar *transaction-cost-factor* 0.0025)
+
+(defmethod order-open ((order order) volume)
   ;; check if volume is available for long
   (when (and (eql (order-type order) :long)
              (< (aref (stock-volume (order-stock order)) *current-date*) volume))
@@ -145,6 +149,19 @@ We store the date in a special variable, and likewise the current order. On init
                    (order-volume order) (aref (stock-close (order-stock order)) *current-date*))))
     ;; pay transaction fee
     (- amount (* *transaction-cost-factor* amount))))
+#+end_src
+
+We add a function that determines the maximal volume available to buy for a given amount of money. For each piece of stock we need to spend market price and transaction fee. We assume we cannot buy part of a stock, so volume should always be an integer.
+#+begin_src lisp
+(defmethod stock-available-volume ((stock stock) time amount)
+  (min (aref (stock-volume stock) *current-date*)
+       (floor amount
+              (* (aref (if (eql time :open) (stock-open stock) (stock-close stock)) *current-date*)
+                 (+ 1 *transaction-cost-factor*)))))
+
+(defmethod stock-available-volume ((stock stock) (order order) amount)
+  (assert (eql stock (order-stock order)))
+  (stock-available-volume stock (if (eql (order-type order) :long) :open :close) amount))
 #+end_src
 * TODO Basic trading algorithm
 * TODO Data visualisation
