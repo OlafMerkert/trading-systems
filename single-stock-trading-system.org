@@ -332,6 +332,70 @@ The standard method for fitting a polynomial to some data is using Least-Squares
 ;; TODO not working yet 
 #+end_src
 ** TODO Parabola analysis
+** DONE Randomised average comparing trader
+Let's start by doing something not too complicated, which does require any complicated libraries.
+
+We look at a moving interval in the past, look at the average in the first and second half and compare those. Then we flip a weighted coin to make a decision. 
+
+
+#+begin_src lisp
+(defpar *random-trader-confidence* 5/7) ; magic prime numbers :-P
+
+(defun flip-coin ()
+  (<= (random 1.0) *random-trader-confidence*))
+
+(defclass/f randomised-average-cmp-trader (reporting-trader)
+  (observation-frame-length))
+
+(defun average (vector)
+  (/ (reduce #'+ vector) (length vector)))
+
+(defun argmax (seq)
+  (let ((m (maximise seq)))
+    (position m seq :test #'<=)))
+
+(defun random-average-compare (vector &optional (bin-count 2))
+  "Split vector into `bin-count' equally large sequences and return
+the position of the subsequence with largest average."
+  (assert (<= 2 bin-count))
+  (let* ((bin-length (ceiling (length vector) bin-count))
+         (bins (iter (for i from 0 below bin-count)
+                     (collect (subseq vector (* i bin-length) (* (+ i 1) bin-length)))))
+         (bins-average (mapcar #'average bins))) ; can't just use a sum because of different lengths
+    (argmax bins-average)))
+#+end_src
+
+The =trade= method will be called every day (before open) and has to make a decision whether to short, long or conclude. For now, we only to long trades. When we do investments, we try to be more careful when we actually observed a downward trend.
+#+begin_src lisp
+(defpar *optimistic-investment-factor* 2/3)
+(defpar *pessimistic-investment-factor* 1/2)
+
+(defmethod trade ((trader randomised-average-cmp-trader))
+  (if (current-order trader)
+      ;; if we have a trade going, check out the close data
+      (let ((highest-bin (random-average-compare (stock-close (past-data (trader-stock trader)
+                                                                         (observation-frame-length trader)))))
+            ;; ^ 0 upward trend, means 1 downward trend
+            ;; flip a coin to see if we want to trust the heuristic
+            (coin (flip-coin)))
+        (when (or (and (not coin) (eql 0 highest-bin))
+                  (and coin (eql 1 downward-trend)))
+          ;; get out of here
+          (conclude trader)))
+      ;; if we have no trade going, check the open data
+      (let ((highest-bin (random-average-compare (stock-open (past-data (trader-stock trader)
+                                                                        (observation-frame-length trader)))))
+            ;; ^ 0 upward trend, means 1 downward trend
+            ;; flip a coin to see if we want to trust the heuristic
+            (coin (flip-coin)))
+        (cond ((and coin (eql 0 highest-bin))
+               ;; let's do an optimistic investment
+               (long trader *optimistic-investment-factor*))
+              ((and (not coin) (eql 1 downward-trend))
+               ;; let's be more cautious when investing
+               (long trader *pessimistic-investment-factor*))))))
+#+end_src
+
 * TODO Data visualisation
 ** DONE Plotting financial data
 #+begin_src lisp
