@@ -408,8 +408,6 @@ The initial balance for the trader will be set by the simulation function.
 
 [[file:plot-1.png]]
 
-file:plot-2.png
-
 *** DONE fix date format for gnuplot
 
 *** TODO fix date printing
@@ -423,47 +421,22 @@ file:plot-2.png
                             (reverse (stock-date (trader-stock trader)))
                             (reverse (balance-report trader))))
                      :using '(0 2)
-                     :with 'points))
+                     :with 'lines))
 #+end_src
 * TODO Basic trading algorithm
-The idea for my trading algorithm is to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
-** TODO Fitting quadratic functions
-The standard method for fitting a polynomial to some data is using Least-Squares. It seems what we need is available in [[https://github.com/blindglobe/lisp-matrix/tree/master][lisp-matrix]], namely a QR decomposition.
+** TODO First idea
+The idea for my trading algorithm was to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
 
-#+begin_src lisp
-(defun least-squares-quadratic (data &optional (polynomial-degree 2))
-  (check-type data vector)
-  (let* ((len (length data))
-         (matrix (make-matrix len (+ 1 polynomial-degree) :initial-element (coerce 1 'double-float))))
-    ;; fill the matrix
-    (dotimes (j polynomial-degree)
-      (dotimes (i len)
-        ;; a row is built by multiplying the previous row with the data
-        (setf (mref matrix i (+ 1 j)) (* (mref matrix i j) (aref data i)))))
-    ;; do a QR decomposition
-    (lisp-matrix::factorize (transpose-matrix matrix) :by :qr)))
+However, I did not find a working implementation of the required fitting algorithms (or at least QR factorisation) in time, so this idea is for now abandoned.
 
-(least-squares-quadratic (vector 0 1 4))
-;; TODO not working yet 
-#+end_src
-** TODO Parabola analysis
-** DONE Randomised average comparing trader
+** DONE Average comparing trader
 Let's start by doing something not too complicated, which does require any complicated libraries.
 
-We look at a moving interval in the past, look at the average in the first and second half and compare those. Then we flip a weighted coin to make a decision. 
+We look at a moving interval in the past, look at the average in the first and second half and compare those. I considered to introduced a random element by flipping a (weighted) coin to decide whether we want to trust the heuristic, but this lead to losses too often.
 
 #+begin_src lisp
-(defpar *random-trader-confidence* 5/7) ; magic prime numbers :-P
-
-(defun flip-coin ()
-  (<= (random 1.0) *random-trader-confidence*))
-
 (defun average (vector)
   (/ (reduce #'+ vector) (length vector)))
-
-(defun argmax (seq)
-  (let ((m (maximise seq)))
-    (position m seq :test #'<=)))
 
 (defun bins-average (vector &optional (bin-count 2))
   "Split vector into `bin-count' equally large sequences and a list of averages."
@@ -474,14 +447,12 @@ We look at a moving interval in the past, look at the average in the first and s
      (mapcar #'average bins)))
 #+end_src
 
-Let's also try to randomise the invested volume a little bit.
-#+begin_src lisp
-(defun random-factor (&optional (center 1) (spread 0.2))
-  "A uniform distribution around `center' of width 2 * `spread'."
-  (- center spread (random (* 2 spread))))
-#+end_src
 
-The =trade= method will be called every day (before open) and has to make a decision whether to short, long or conclude. For now, we only to long trades. When we do investments, we try to be more careful when we actually observed a downward trend.
+The =trade= method will be called every day (before open) and has to make a decision whether to short, long or conclude a running trade.
+
+The trend function compares the averages in the two time intervals and decides if there is a significant upward/downward trend. We also distinguish between higher and lower levels of significance and adjust the prudence levels there.
+
+Also, we completely ignore the *high* and *low* data, instead we just look at *open* data for starting trades and the *close* data for concluding trades (as those are the actual numbers used for those operations).
 #+begin_src lisp
 (defpar *optimistic-investment-factor* 2/3)
 (defpar *pessimistic-investment-factor* 1/2)
@@ -528,15 +499,11 @@ The =trade= method will be called every day (before open) and has to make a deci
               ((> (* -2 *significance-level*) trend)
                (short trader *optimistic-investment-factor*))))))
 #+end_src
-*** DONE implement shorting
-As the stock here seems to lose value most of the time, this could be useful.
-*** DONE be more reluctant to conclude an order
 ** TODO Trial run and analysis
 Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp :results append
-(setf *random-trader-confidence* 4/7
-      ,*optimistic-investment-factor* 2/7
+(setf *optimistic-investment-factor* 2/7
       ,*pessimistic-investment-factor* 6/7
       ,*significance-level* 1.6)
 
@@ -550,37 +517,6 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 #+end_src
 
 #+RESULTS: rand-av-cmp-trader-test
-: 118271.766
-: 114350.945
-: 118785.64
-: 121663.95
-: 144193.98
-: 144193.98
-: 122114.22
-: 128599.305
-: 132877.84
-: 137725.16
-: 119838.04
-: 130591.984
-: 130555.11
-: 118695.29
-: 121876.33
-: 121350.695
-: 137725.16
-: 157109.22
-: 147407.9
-: 151379.81
-: 159355.1
-: 158711.16
-: 158697.53
-: 159355.1
-: 151379.81
-: 161918.98
-: 171265.22
-: 174394.6
-: 156238.97
-: 153184.64
-: 166506.31
 : 181325.2
 
 #+begin_src lisp
@@ -649,3 +585,5 @@ And here is for reproduction purporses the full data on the orders done.
 + Also, it seems that when we detect higher changes, we should invest less. Probably because these changes go in both directions.
 + However, it does not seem to work if we start to reverse the type of order for higher changes.
 + Another parameter to be carefully chosen is the =*significance-level*=. 
++ As we can see from the plot, the strategy can be improved. At one point, we more than tripled the initial balance, however we reinvested it and lost it again.
++ So maybe there we should try to put aside large winnings, or at least think more about the invested amount.
