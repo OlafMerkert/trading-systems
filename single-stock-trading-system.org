@@ -452,7 +452,6 @@ Let's start by doing something not too complicated, which does require any compl
 
 We look at a moving interval in the past, look at the average in the first and second half and compare those. Then we flip a weighted coin to make a decision. 
 
-
 #+begin_src lisp
 (defpar *random-trader-confidence* 5/7) ; magic prime numbers :-P
 
@@ -475,7 +474,12 @@ We look at a moving interval in the past, look at the average in the first and s
      (mapcar #'average bins)))
 #+end_src
 
-Note that in case of equal averages, the first bin is going to be preferred.
+Let's also try to randomise the invested volume a little bit.
+#+begin_src lisp
+(defun random-factor (&optional (center 1) (spread 0.2))
+  "A uniform distribution around `center' of width 2 * `spread'."
+  (- center spread (random (* 2 spread))))
+#+end_src
 
 The =trade= method will be called every day (before open) and has to make a decision whether to short, long or conclude. For now, we only to long trades. When we do investments, we try to be more careful when we actually observed a downward trend.
 #+begin_src lisp
@@ -532,13 +536,13 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp :results append
 (setf *random-trader-confidence* 4/7
-      ,*optimistic-investment-factor* 2/3
-      ,*pessimistic-investment-factor* 4/7
-      ,*significance-level* 1.3)
+      ,*optimistic-investment-factor* 2/7
+      ,*pessimistic-investment-factor* 6/7
+      ,*significance-level* 1.6)
 
 (defpar *current-trader*
         (make-instance 'randomised-average-cmp-trader
-                       :observation-frame-length 100
+                       :observation-frame-length 84
                        :trader-stock *current-stock*))
 
 (simulate-trader *current-trader* 100000
@@ -556,6 +560,28 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 : 128599.305
 : 132877.84
 : 137725.16
+: 119838.04
+: 130591.984
+: 130555.11
+: 118695.29
+: 121876.33
+: 121350.695
+: 137725.16
+: 157109.22
+: 147407.9
+: 151379.81
+: 159355.1
+: 158711.16
+: 158697.53
+: 159355.1
+: 151379.81
+: 161918.98
+: 171265.22
+: 174394.6
+: 156238.97
+: 153184.64
+: 166506.31
+: 181325.2
 
 #+begin_src lisp
 (plot* "plot-3.png" *current-trader*)
@@ -566,10 +592,60 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 file:plot-3.png
 
 We can also have a look at how long we usually hold a stock
-#+begin_src lisp
+#+begin_src lisp :results replace scalar
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
 #+end_src
+
+#+RESULTS:
+: (118 156 40 87 54 192 43 57 250 117 132 40 82 29 128 53 235 42 38 101 40 206
+:  277 64 72)
+
+And here is for reproduction purporses the full data on the orders done.
+#+begin_src lisp :results replace
+(defun trader-order-table (trader)
+  (let ((date-array (stock-date (trader-stock trader))))
+    (cons (list "Type" "Volume" "Start" "End" "Duration")
+          (mapcar (lambda (o)
+                    (list (order-type o)
+                          (order-volume o)
+                          (aref date-array (order-start o))
+                          (aref date-array (order-end o))
+                          (order-duration o)))
+                  (reverse (order-list trader))))))
+
+(trader-order-table *current-trader*)
+#+end_src 
+
+#+RESULTS:
+| Type   | Volume |      Start |        End | Duration |
+| :LONG  |    593 | 2000-05-03 | 2000-10-19 |      118 |
+| :SHORT |    600 | 2000-10-20 | 2001-06-06 |      156 |
+| :LONG  |    697 | 2001-06-07 | 2001-08-03 |       40 |
+| :SHORT |    704 | 2001-08-06 | 2001-12-13 |       87 |
+| :LONG  |    811 | 2001-12-14 | 2002-03-06 |       54 |
+| :SHORT |    802 | 2002-03-08 | 2002-12-10 |      192 |
+| :LONG  |   1243 | 2002-12-11 | 2003-02-13 |       43 |
+| :SHORT |   1260 | 2003-02-14 | 2003-05-08 |       57 |
+| :LONG  |   1002 | 2003-05-09 | 2004-05-06 |      250 |
+| :SHORT |    982 | 2004-05-07 | 2004-10-25 |      117 |
+| :LONG  |   1002 | 2004-10-26 | 2005-05-05 |      132 |
+| :SHORT |    989 | 2005-05-06 | 2005-07-05 |       40 |
+| :LONG  |    967 | 2005-07-07 | 2005-11-01 |       82 |
+| :SHORT |    952 | 2005-11-03 | 2005-12-15 |       29 |
+| :LONG  |    880 | 2005-12-16 | 2006-06-22 |      128 |
+| :SHORT |    882 | 2006-06-26 | 2006-09-11 |       53 |
+| :LONG  |    807 | 2006-09-12 | 2007-08-20 |      235 |
+| :SHORT |    788 | 2007-08-22 | 2007-10-22 |       42 |
+| :LONG  |    740 | 2007-10-23 | 2007-12-17 |       38 |
+| :SHORT |    739 | 2007-12-18 | 2008-05-14 |      101 |
+| :LONG  |    790 | 2008-05-15 | 2008-07-14 |       40 |
+| :SHORT |    813 | 2008-07-15 | 2009-05-08 |      206 |
+| :LONG  |   1298 | 2009-05-11 | 2010-06-16 |      277 |
+| :SHORT |   1260 | 2010-06-17 | 2010-09-17 |       64 |
+| :LONG  |   1251 | 2010-09-20 | 2010-12-31 |       72 |
+
 *** Observations
 + =observation-frame-length= seems to be quite important. Low numbers like 40 even make us lose money big time.
 + Also, it seems that when we detect higher changes, we should invest less. Probably because these changes go in both directions.
 + However, it does not seem to work if we start to reverse the type of order for higher changes.
++ Another parameter to be carefully chosen is the =*significance-level*=. 
