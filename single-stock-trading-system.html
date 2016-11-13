@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Basic trading system for a single stock</title>
+<!-- 2016-11-13 So 09:08 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Org-mode">
+<meta name="author" content="Olaf Merkert">
+
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<style type="text/css">
+/* org mode styles on top of twbs */
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    font-size: 18px;
+    margin-bottom: 105px;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 101px;
+    background-color: #f5f5f5;
+}
+
+footer > div {
+    padding: 10px;
+}
+
+footer p {
+    margin: 0 0 5px;
+    text-align: center;
+    font-size: 16px;
+}
+
+#table-of-contents {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+blockquote p {
+    font-size: 18px;
+}
+
+pre {
+    font-size: 16px;
+}
+
+.footpara {
+    display: inline-block;
+}
+
+figcaption {
+  font-size: 16px;
+  color: #666;
+  font-style: italic;
+  padding-bottom: 15px;
+}
+
+/* from twbs docs */
+
+.bs-docs-sidebar.affix {
+    position: static;
+}
+@media (min-width: 768px) {
+    .bs-docs-sidebar {
+        padding-left: 20px;
+    }
+}
+
+/* All levels of nav */
+.bs-docs-sidebar .nav > li > a {
+    display: block;
+    padding: 4px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #999;
+}
+.bs-docs-sidebar .nav > li > a:hover,
+.bs-docs-sidebar .nav > li > a:focus {
+    padding-left: 19px;
+    color: #A1283B;
+    text-decoration: none;
+    background-color: transparent;
+    border-left: 1px solid #A1283B;
+}
+.bs-docs-sidebar .nav > .active > a,
+.bs-docs-sidebar .nav > .active:hover > a,
+.bs-docs-sidebar .nav > .active:focus > a {
+    padding-left: 18px;
+    font-weight: bold;
+    color: #A1283B;
+    background-color: transparent;
+    border-left: 2px solid #A1283B;
+}
+
+/* Nav: second level (shown on .active) */
+.bs-docs-sidebar .nav .nav {
+    display: none; /* Hide by default, but at >768px, show it */
+    padding-bottom: 10px;
+}
+.bs-docs-sidebar .nav .nav > li > a {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 30px;
+    font-size: 12px;
+    font-weight: normal;
+}
+.bs-docs-sidebar .nav .nav > li > a:hover,
+.bs-docs-sidebar .nav .nav > li > a:focus {
+    padding-left: 29px;
+}
+.bs-docs-sidebar .nav .nav > .active > a,
+.bs-docs-sidebar .nav .nav > .active:hover > a,
+.bs-docs-sidebar .nav .nav > .active:focus > a {
+    padding-left: 28px;
+    font-weight: 500;
+}
+
+/* Nav: third level (shown on .active) */
+.bs-docs-sidebar .nav .nav .nav {
+    padding-bottom: 10px;
+}
+.bs-docs-sidebar .nav .nav .nav > li > a {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 40px;
+    font-size: 12px;
+    font-weight: normal;
+}
+.bs-docs-sidebar .nav .nav .nav > li > a:hover,
+.bs-docs-sidebar .nav .nav .nav > li > a:focus {
+    padding-left: 39px;
+}
+.bs-docs-sidebar .nav .nav .nav > .active > a,
+.bs-docs-sidebar .nav .nav .nav > .active:hover > a,
+.bs-docs-sidebar .nav .nav .nav > .active:focus > a {
+    padding-left: 38px;
+    font-weight: 500;
+}
+
+/* Show and affix the side nav when space allows it */
+@media (min-width: 992px) {
+    .bs-docs-sidebar .nav > .active > ul {
+        display: block;
+    }
+    /* Widen the fixed sidebar */
+    .bs-docs-sidebar.affix,
+    .bs-docs-sidebar.affix-bottom {
+        width: 213px;
+    }
+    .bs-docs-sidebar.affix {
+        position: fixed; /* Undo the static from mobile first approach */
+        top: 20px;
+    }
+    .bs-docs-sidebar.affix-bottom {
+        position: absolute; /* Undo the static from mobile first approach */
+    }
+    .bs-docs-sidebar.affix .bs-docs-sidenav,.bs-docs-sidebar.affix-bottom .bs-docs-sidenav {
+        margin-top: 0;
+        margin-bottom: 0
+    }
+}
+@media (min-width: 1200px) {
+    /* Widen the fixed sidebar again */
+    .bs-docs-sidebar.affix-bottom,
+    .bs-docs-sidebar.affix {
+        width: 263px;
+    }
+}
+</style>
+<script type="text/javascript">
+$(function() {
+    'use strict';
+
+    $('.bs-docs-sidebar li').first().addClass('active');
+
+    $(document.body).scrollspy({target: '.bs-docs-sidebar'});
+
+    $('.bs-docs-sidebar').affix();
+});
+</script>
+</head>
+<body>
+<div id="content" class="container">
+<div class="row"><div class="col-md-9"><h1 class="title">Basic trading system for a single stock</h1>
+
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> <span class="label label-default DONE">DONE</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We wish to develop a basic trading system, which can watch a single stock and keep track of a single position an said stock.
+</p>
+
+<p>
+Our language of choice is Common Lisp, we start by loading the required dependencies through <a href="https://www.quicklisp.org/beta/">Quicklisp</a>.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>ql:quickload '<span style="color: #8c8c8c;">(</span>ol-utils drakma cl-csv parse-number eazy-gnuplot<span style="color: #8c8c8c;">))</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">in-package</span> <span style="color: #3a5fcd;">:ol-user</span><span style="color: #8c8c8c;">)</span>
+</pre>
+</div>
+
+<p>
+The programming style chosen is literate programming. We think of our program as a book which contains source code in between the explanation/exposition of the actual problem. As programming environment, we use <a href="http://orgmode.org/">Org mode for Emacs</a>. It easily allows to export to HTML or PDF (and more) and to extract just the source code (this is called <i>tangling</i>).
+</p>
+
+<p>
+You probably received this document with several files, including a PDF or HTML file with all the content, some image files for the plots, a <code>.lisp</code> file which contains just the Common Lisp code, and maybe even the <code>.org</code> file, which is the source document for all the others.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> <span class="label label-default DONE">DONE</span> Importing data</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+We begin by downloading the CSV data and parsing it. Notice that months are given first and use numbers 0-11. For days, the usual numbering 1-31 is used.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*stock-csv-data*</span>
+        <span style="color: #8c8c8c;">(</span>cl-csv:read-csv
+         <span style="color: #8c8c8c;">(</span>drakma:http-request <span style="color: #436eee;">"http://chart.finance.yahoo.com/table.csv?s=SPY&amp;a=0&amp;b=1&amp;c=2000&amp;d=11&amp;e=31&amp;f=2010&amp;g=d&amp;ignore=.csv"</span>
+                              <span style="color: #3a5fcd;">:want-stream</span> t <span style="color: #3a5fcd;">:close</span> t<span style="color: #8c8c8c;">)))</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>subseq *stock-csv-data* <span style="color: #b03060;">0</span> <span style="color: #b03060;">10</span><span style="color: #8c8c8c;">)</span>
+</pre>
+</div>
+
+<table class="table table-striped table-bordered table-hover table-condensed">
+
+
+<colgroup>
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+</colgroup>
+<tbody>
+<tr>
+<td class="text-right">Date</td>
+<td class="text-right">Open</td>
+<td class="text-right">High</td>
+<td class="text-right">Low</td>
+<td class="text-right">Close</td>
+<td class="text-right">Volume</td>
+<td class="text-right">Adj Close</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-31</td>
+<td class="text-right">125.529999</td>
+<td class="text-right">125.870003</td>
+<td class="text-right">125.330002</td>
+<td class="text-right">125.75</td>
+<td class="text-right">91218900</td>
+<td class="text-right">111.772075</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-30</td>
+<td class="text-right">125.800003</td>
+<td class="text-right">126.129997</td>
+<td class="text-right">125.529999</td>
+<td class="text-right">125.720001</td>
+<td class="text-right">76616900</td>
+<td class="text-right">111.74541</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-29</td>
+<td class="text-right">125.980003</td>
+<td class="text-right">126.199997</td>
+<td class="text-right">125.900002</td>
+<td class="text-right">125.919998</td>
+<td class="text-right">58033100</td>
+<td class="text-right">111.923176</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-28</td>
+<td class="text-right">125.900002</td>
+<td class="text-right">125.949997</td>
+<td class="text-right">125.50</td>
+<td class="text-right">125.830002</td>
+<td class="text-right">55309100</td>
+<td class="text-right">111.843184</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-27</td>
+<td class="text-right">125.129997</td>
+<td class="text-right">125.769997</td>
+<td class="text-right">125.040001</td>
+<td class="text-right">125.650002</td>
+<td class="text-right">58126000</td>
+<td class="text-right">111.683192</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-23</td>
+<td class="text-right">125.639999</td>
+<td class="text-right">125.779999</td>
+<td class="text-right">125.290001</td>
+<td class="text-right">125.599998</td>
+<td class="text-right">70053700</td>
+<td class="text-right">111.638747</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-22</td>
+<td class="text-right">125.480003</td>
+<td class="text-right">125.82</td>
+<td class="text-right">125.410004</td>
+<td class="text-right">125.779999</td>
+<td class="text-right">78878100</td>
+<td class="text-right">111.798739</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-21</td>
+<td class="text-right">124.989998</td>
+<td class="text-right">125.470001</td>
+<td class="text-right">124.870003</td>
+<td class="text-right">125.389999</td>
+<td class="text-right">94965500</td>
+<td class="text-right">111.45209</td>
+</tr>
+
+<tr>
+<td class="text-right">2010-12-20</td>
+<td class="text-right">124.639999</td>
+<td class="text-right">124.900002</td>
+<td class="text-right">123.980003</td>
+<td class="text-right">124.599998</td>
+<td class="text-right">119085500</td>
+<td class="text-right">110.749903</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+The data is still of type string. We have 7 columns, but we only need Open, High, Low, Close and Volume.
+</p>
+
+<p>
+We define a new class to hold this data. We keep each column in a separate array/vector.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>defclass/f stock <span style="color: #8c8c8c;">()</span>
+  <span style="color: #8c8c8c;">(</span>stock-ticker
+   stock-date
+   stock-open stock-high stock-low stock-close stock-volume<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">print-object</span> <span style="color: #8c8c8c;">((</span>stock stock<span style="color: #8c8c8c;">)</span> stream<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>print-unreadable-object <span style="color: #8c8c8c;">(</span>stock stream <span style="color: #3a5fcd;">:type</span> t<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-accessors</span> <span style="color: #8c8c8c;">((</span>stock-ticker stock-ticker<span style="color: #8c8c8c;">)</span>
+                     <span style="color: #8c8c8c;">(</span>stock-date stock-date<span style="color: #8c8c8c;">))</span>
+        stock
+      <span style="color: #8c8c8c;">(</span>format stream <span style="color: #436eee;">"~a LEN: ~a"</span> stock-ticker <span style="color: #8c8c8c;">(</span>length stock-date<span style="color: #8c8c8c;">))))</span>
+  stock<span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">csv-&gt;stock</span> <span style="color: #8c8c8c;">(</span>ticker stock-csv-data<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>iter <span style="color: #8c8c8c;">(</span>for event in <span style="color: #8c8c8c;">(</span>rest stock-csv-data<span style="color: #8c8c8c;">))</span> <span style="color: #36648b;">; remove header</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span> into stock-date result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>parse-number:parse-number <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">))</span> into stock-open result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>parse-number:parse-number <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">))</span> into stock-high result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>parse-number:parse-number <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">3</span><span style="color: #8c8c8c;">))</span> into stock-low result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>parse-number:parse-number <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">4</span><span style="color: #8c8c8c;">))</span> into stock-close result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>parse-number:parse-number <span style="color: #8c8c8c;">(</span>elt event <span style="color: #b03060;">5</span><span style="color: #8c8c8c;">))</span> into stock-volume result-type vector<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>finally <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">return</span> <span style="color: #8c8c8c;">(</span>make-instance 'stock
+                                        <span style="color: #3a5fcd;">:stock-ticker</span> ticker
+                                        <span style="color: #3a5fcd;">:stock-date</span> stock-date
+                                        <span style="color: #3a5fcd;">:stock-open</span> stock-open
+                                        <span style="color: #3a5fcd;">:stock-high</span> stock-high
+                                        <span style="color: #3a5fcd;">:stock-low</span> stock-low
+                                        <span style="color: #3a5fcd;">:stock-close</span> stock-close
+                                        <span style="color: #3a5fcd;">:stock-volume</span> stock-volume<span style="color: #8c8c8c;">)))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*current-stock*</span> <span style="color: #8c8c8c;">(</span>csv-&gt;stock <span style="color: #436eee;">"SPY"</span> *stock-csv-data*<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+<p>
+For now, we ignore the concrete dates and just use integers to refer to dates. Note that higher index means earlier date.
+</p>
+</div>
+<div id="outline-container-sec-2-1" class="outline-3">
+<h3 id="sec-2-1"><span class="section-number-3">2.1</span> <span class="label label-default DONE">DONE</span> Subclass for filtering to past data</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+For our trading algorithm, we need to restrict our view to the past. Sometimes it may be useful to generally restrict to some time interval.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>defclass/f stock-subseq <span style="color: #8c8c8c;">(</span>stock<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>parent start end<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">stock-subseq</span> <span style="color: #8c8c8c;">(</span>stock start <span style="color: #0000cd;">&amp;optional</span> end<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">if end is larger than sequence length, just go to sequence end</span>
+  <span style="color: #8c8c8c;">(</span>let1 <span style="color: #8c8c8c;">(</span>len <span style="color: #8c8c8c;">(</span>length <span style="color: #8c8c8c;">(</span>stock-date stock<span style="color: #8c8c8c;">)))</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">unless</span> <span style="color: #8c8c8c;">(</span>or <span style="color: #8c8c8c;">(</span>not end<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>&lt;= end len<span style="color: #8c8c8c;">))</span>
+      <span style="color: #8c8c8c;">(</span>setf end len<span style="color: #8c8c8c;">)))</span>
+  <span style="color: #8c8c8c;">(</span>make-instance 'stock-subseq <span style="color: #3a5fcd;">:parent</span> stock <span style="color: #3a5fcd;">:start</span> start <span style="color: #3a5fcd;">:end</span> end<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">stock-ticker</span> <span style="color: #8c8c8c;">((</span>stock-subseq stock-subseq<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>stock-ticker <span style="color: #8c8c8c;">(</span>parent stock-subseq<span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #36648b;">;; </span><span style="color: #36648b;">bind multi copies the definition for stock-date for the other slots</span>
+<span style="color: #8c8c8c;">(</span>bind-multi <span style="color: #8c8c8c;">((</span>stock-date stock-date stock-open stock-high stock-low stock-close stock-volume<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">stock-date</span> <span style="color: #8c8c8c;">((</span>stock-subseq stock-subseq<span style="color: #8c8c8c;">))</span>
+    <span style="color: #8c8c8c;">(</span>subseq <span style="color: #8c8c8c;">(</span>stock-date <span style="color: #8c8c8c;">(</span>parent stock-subseq<span style="color: #8c8c8c;">))</span> <span style="color: #8c8c8c;">(</span>start stock-subseq<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>end stock-subseq<span style="color: #8c8c8c;">))))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> <span class="label label-default DONE">DONE</span> Trading system</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+We need to implement orders. For now we restrict to the single stock case.
+</p>
+
+<ul class="org-ul">
+<li>An order is long or short, on some specific stock
+</li>
+<li>The order starts at open, and finishes at close
+</li>
+<li>for each we have a starting day
+</li>
+<li>starting and finishing both return a number: positive if adding to your account (selling), negative if deducting (buying). Transaction cost is factored in automatically.
+</li>
+<li>Before committing to an order, we need to check we have the money.
+</li>
+</ul>
+</div>
+<div id="outline-container-sec-3-1" class="outline-3">
+<h3 id="sec-3-1"><span class="section-number-3">3.1</span> <span class="label label-default DONE">DONE</span> Orders</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+The lifecycle of an order is as follows:
+</p>
+<ul class="org-ul">
+<li>Decide on the stock and whether to long or short it
+</li>
+<li>Then try to open the order, see if we can afford it. Possibly decrease the volume.
+</li>
+<li>Finally close the order. For short orders, we also need to check if we actually can afford it.
+</li>
+</ul>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>defclass/f order <span style="color: #8c8c8c;">()</span>
+  <span style="color: #8c8c8c;">(</span>order-stock order-type order-start order-end order-volume<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">order-create</span> <span style="color: #8c8c8c;">(</span>stock <span style="color: #0000cd;">&amp;optional</span> <span style="color: #8c8c8c;">(</span>order-type <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>make-instance 'order
+                 <span style="color: #3a5fcd;">:order-stock</span> stock <span style="color: #3a5fcd;">:order-type</span> order-type
+                 <span style="color: #3a5fcd;">:order-start</span> nil <span style="color: #3a5fcd;">:order-end</span> nil <span style="color: #3a5fcd;">:order-volume</span> nil<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">print-object</span> <span style="color: #8c8c8c;">((</span>object order<span style="color: #8c8c8c;">)</span> stream<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>print-unreadable-object <span style="color: #8c8c8c;">(</span>object stream <span style="color: #3a5fcd;">:type</span> t<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-slots</span> <span style="color: #8c8c8c;">(</span>order-type order-end order-start order-volume<span style="color: #8c8c8c;">)</span>
+        object
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> order-end
+          <span style="color: #8c8c8c;">(</span>format stream <span style="color: #436eee;">"~A Duration: ~A Volume: ~A"</span> order-type <span style="color: #8c8c8c;">(</span>- order-start order-end<span style="color: #8c8c8c;">)</span> order-volume<span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>format stream <span style="color: #436eee;">"~A Start: ~A Volume: ~A"</span> order-type order-start order-volume<span style="color: #8c8c8c;">))))</span>
+  object<span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">order-duration</span> <span style="color: #8c8c8c;">((</span>order order<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-slots</span> <span style="color: #8c8c8c;">(</span>order-start order-end<span style="color: #8c8c8c;">)</span> order
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> order-end
+        <span style="color: #8c8c8c;">(</span>abs <span style="color: #8c8c8c;">(</span>- order-start order-end<span style="color: #8c8c8c;">))</span>
+        <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)))</span>
+</pre>
+</div>
+
+<p>
+For the dates we just use integers, referring to indices for the <code>stock</code> datastructure. We store the date in a special variable. Both <code>order-open</code> and <code>order-close</code> return a number which represents the balance change of our account. This includes already the transaction costs (which depend on <code>order-volume</code> and current stock value).
+</p>
+
+<p>
+Note we always open orders at "open", and always close orders at "close".
+</p>
+
+<p>
+Currently slippage is not modeled, I am not even sure it would factor into this code.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defvar</span> <span style="color: #00008b;">*current-date*</span> <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*transaction-cost-factor*</span> <span style="color: #b03060;">0.0025</span><span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">order-open</span> <span style="color: #8c8c8c;">((</span>order order<span style="color: #8c8c8c;">)</span> volume<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">check if volume is available for long</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> <span style="color: #8c8c8c;">(</span>and <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type order<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">)</span>
+             <span style="color: #8c8c8c;">(</span>&lt; <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>stock-volume <span style="color: #8c8c8c;">(</span>order-stock order<span style="color: #8c8c8c;">))</span> *current-date*<span style="color: #8c8c8c;">)</span> volume<span style="color: #8c8c8c;">))</span>
+    <span style="color: #36648b;">;; </span><span style="color: #ff6347; font-weight: bold;">todo</span><span style="color: #36648b;"> signal something</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">return-from</span> order-open nil<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>order-start order<span style="color: #8c8c8c;">)</span> *current-date*
+        <span style="color: #8c8c8c;">(</span>order-volume order<span style="color: #8c8c8c;">)</span> volume<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">buy/sell at opening time</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>amount <span style="color: #8c8c8c;">(</span>* <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type order<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">)</span> -1 <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)</span>
+                   volume <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>stock-open <span style="color: #8c8c8c;">(</span>order-stock order<span style="color: #8c8c8c;">))</span> *current-date*<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #36648b;">;; </span><span style="color: #36648b;">pay transaction fee</span>
+    <span style="color: #8c8c8c;">(</span>- amount <span style="color: #8c8c8c;">(</span>* *transaction-cost-factor* amount<span style="color: #8c8c8c;">))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">order-close</span> <span style="color: #8c8c8c;">((</span>order order<span style="color: #8c8c8c;">))</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">check if volume is available for short</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> <span style="color: #8c8c8c;">(</span>and <span style="color: #8c8c8c;">(</span>not <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type order<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">))</span>
+             <span style="color: #8c8c8c;">(</span>&lt; <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>stock-volume <span style="color: #8c8c8c;">(</span>order-stock order<span style="color: #8c8c8c;">))</span> *current-date*<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>order-volume order<span style="color: #8c8c8c;">)))</span>
+    <span style="color: #36648b;">;; </span><span style="color: #ff6347; font-weight: bold;">todo</span><span style="color: #36648b;"> signal something</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">return-from</span> order-close nil<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>order-end order<span style="color: #8c8c8c;">)</span> *current-date*<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">buy/sell at closing time</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>amount <span style="color: #8c8c8c;">(</span>* <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type order<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">)</span> <span style="color: #b03060;">1</span> -1<span style="color: #8c8c8c;">)</span>
+                   <span style="color: #8c8c8c;">(</span>order-volume order<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>stock-close <span style="color: #8c8c8c;">(</span>order-stock order<span style="color: #8c8c8c;">))</span> *current-date*<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #36648b;">;; </span><span style="color: #36648b;">pay transaction fee</span>
+    <span style="color: #8c8c8c;">(</span>- amount <span style="color: #8c8c8c;">(</span>* *transaction-cost-factor* amount<span style="color: #8c8c8c;">))))</span>
+</pre>
+</div>
+
+<p>
+We add a function that determines the maximal volume available to buy for a given amount of money. For each piece of stock we need to spend market price and transaction fee. We assume we cannot buy part of a stock, so volume should always be an integer.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">stock-available-volume</span> <span style="color: #8c8c8c;">((</span>stock stock<span style="color: #8c8c8c;">)</span> time amount<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>min <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>stock-volume stock<span style="color: #8c8c8c;">)</span> *current-date*<span style="color: #8c8c8c;">)</span>
+       <span style="color: #8c8c8c;">(</span>floor amount
+              <span style="color: #8c8c8c;">(</span>* <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>eql time <span style="color: #3a5fcd;">:open</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>stock-open stock<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>stock-close stock<span style="color: #8c8c8c;">))</span> *current-date*<span style="color: #8c8c8c;">)</span>
+                 <span style="color: #8c8c8c;">(</span>+ <span style="color: #b03060;">1</span> *transaction-cost-factor*<span style="color: #8c8c8c;">)))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">stock-available-volume</span> <span style="color: #8c8c8c;">((</span>stock stock<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>order order<span style="color: #8c8c8c;">)</span> amount<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #ff6347; font-weight: bold;">assert</span> <span style="color: #8c8c8c;">(</span>eql stock <span style="color: #8c8c8c;">(</span>order-stock order<span style="color: #8c8c8c;">)))</span>
+  <span style="color: #8c8c8c;">(</span>stock-available-volume stock <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type order<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:open</span> <span style="color: #3a5fcd;">:close</span><span style="color: #8c8c8c;">)</span> amount<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-2" class="outline-3">
+<h3 id="sec-3-2"><span class="section-number-3">3.2</span> <span class="label label-default DONE">DONE</span> Trading</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+For actual trading, we need to keep track of
+</p>
+<ul class="org-ul">
+<li>current order
+</li>
+<li>current balance
+</li>
+</ul>
+<p>
+and maybe also collect some statistics. We model this with a trader object. A trader can only have one position at a time. We assume the trader is not completely stupid, so he will avoid always negative balance &#x2013; until time is over, and he may be forced to close a shorted position.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>defclass/f trader <span style="color: #8c8c8c;">()</span>
+  <span style="color: #8c8c8c;">(</span>trader-stock
+   <span style="color: #8c8c8c;">(</span>trader-balance <span style="color: #3a5fcd;">:initarg</span> <span style="color: #3a5fcd;">:trader-balance</span>
+                   <span style="color: #3a5fcd;">:initform</span> <span style="color: #b03060;">0</span>
+                   <span style="color: #3a5fcd;">:accessor</span> trader-balance<span style="color: #8c8c8c;">)</span>
+   <span style="color: #8c8c8c;">(</span>current-order <span style="color: #3a5fcd;">:initarg</span> <span style="color: #3a5fcd;">:current-order</span>
+                  <span style="color: #3a5fcd;">:initform</span> nil
+                  <span style="color: #3a5fcd;">:accessor</span> current-order<span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #8c8c8c;">(</span>create-standard-print-object trader trader-stock trader-balance<span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">busy-p</span> <span style="color: #8c8c8c;">((</span>trader trader<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>current-order trader<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">short</span> <span style="color: #8c8c8c;">((</span>trader trader<span style="color: #8c8c8c;">)</span> part<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">here we need any positive number. keep in mind that anything</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">significantly larger than 1 is probably rather stupid.</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #ff6347; font-weight: bold;">assert</span> <span style="color: #8c8c8c;">(</span>&lt;= <span style="color: #b03060;">0</span> part<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">unless</span> <span style="color: #8c8c8c;">(</span>busy-p trader<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-accessors</span> <span style="color: #8c8c8c;">((</span>current-order current-order<span style="color: #8c8c8c;">))</span> trader
+      <span style="color: #8c8c8c;">(</span>setf current-order <span style="color: #8c8c8c;">(</span>order-create <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:short</span><span style="color: #8c8c8c;">))</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let*</span> <span style="color: #8c8c8c;">((</span>amount <span style="color: #8c8c8c;">(</span>* part <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)))</span>
+             <span style="color: #36648b;">;; </span><span style="color: #36648b;">don't do stupid stuff like go over available volume</span>
+             <span style="color: #8c8c8c;">(</span>volume <span style="color: #8c8c8c;">(</span>stock-available-volume <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:open</span> amount<span style="color: #8c8c8c;">))</span>
+             <span style="color: #36648b;">;; </span><span style="color: #36648b;">see if we can afford it</span>
+             <span style="color: #8c8c8c;">(</span>new-balance <span style="color: #8c8c8c;">(</span>+ <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span>
+                             <span style="color: #8c8c8c;">(</span>order-open current-order volume<span style="color: #8c8c8c;">))))</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>&lt; new-balance <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span>
+            <span style="color: #36648b;">;; </span><span style="color: #36648b;">abort</span>
+            <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">progn</span>
+              <span style="color: #8c8c8c;">(</span>setf current-order nil<span style="color: #8c8c8c;">)</span>
+              nil<span style="color: #8c8c8c;">)</span>
+            <span style="color: #36648b;">;; </span><span style="color: #36648b;">update balance</span>
+            <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">progn</span>
+              <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span> new-balance<span style="color: #8c8c8c;">)</span>
+              t<span style="color: #8c8c8c;">))))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">long</span> <span style="color: #8c8c8c;">((</span>trader trader<span style="color: #8c8c8c;">)</span> part<span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">for this type of trade, we need a number between 0 and 1</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #ff6347; font-weight: bold;">assert</span> <span style="color: #8c8c8c;">(</span>&lt;= <span style="color: #b03060;">0</span> part <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">unless</span> <span style="color: #8c8c8c;">(</span>busy-p trader<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-accessors</span> <span style="color: #8c8c8c;">((</span>current-order current-order<span style="color: #8c8c8c;">))</span> trader
+      <span style="color: #8c8c8c;">(</span>setf current-order <span style="color: #8c8c8c;">(</span>order-create <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">))</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let*</span> <span style="color: #8c8c8c;">((</span>amount <span style="color: #8c8c8c;">(</span>* part <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)))</span>
+             <span style="color: #36648b;">;; </span><span style="color: #36648b;">don't do stupid stuff like go over available volume</span>
+             <span style="color: #8c8c8c;">(</span>volume <span style="color: #8c8c8c;">(</span>stock-available-volume <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:open</span> amount<span style="color: #8c8c8c;">))</span>
+             <span style="color: #36648b;">;; </span><span style="color: #36648b;">see if we can afford it</span>
+             <span style="color: #8c8c8c;">(</span>new-balance <span style="color: #8c8c8c;">(</span>+ <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span>
+                             <span style="color: #8c8c8c;">(</span>order-open current-order volume<span style="color: #8c8c8c;">))))</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>&lt; new-balance <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span>
+            <span style="color: #36648b;">;; </span><span style="color: #36648b;">abort</span>
+            <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">progn</span>
+              <span style="color: #8c8c8c;">(</span>setf current-order nil<span style="color: #8c8c8c;">)</span>
+              nil<span style="color: #8c8c8c;">)</span>
+            <span style="color: #36648b;">;; </span><span style="color: #36648b;">update balance</span>
+            <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">progn</span>
+              <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span> new-balance<span style="color: #8c8c8c;">)</span>
+              t<span style="color: #8c8c8c;">))))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">conclude</span> <span style="color: #8c8c8c;">((</span>trader trader<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;optional</span> final<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> <span style="color: #8c8c8c;">(</span>busy-p trader<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-accessors</span> <span style="color: #8c8c8c;">((</span>current-order current-order<span style="color: #8c8c8c;">))</span> trader
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>amount <span style="color: #8c8c8c;">(</span>order-close current-order<span style="color: #8c8c8c;">)))</span>
+        <span style="color: #36648b;">;; </span><span style="color: #36648b;">possibly `</span><span style="color: #191970;">amount</span><span style="color: #36648b;">' is nil, if not enough volume is available</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> amount
+          <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>new-balance <span style="color: #8c8c8c;">(</span>+ <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span> amount<span style="color: #8c8c8c;">)))</span>
+            <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>and <span style="color: #8c8c8c;">(</span>&lt; new-balance <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>not final<span style="color: #8c8c8c;">))</span>
+                <span style="color: #36648b;">;; </span><span style="color: #36648b;">abort</span>
+                nil
+                <span style="color: #36648b;">;; </span><span style="color: #36648b;">unset order, update balance</span>
+                <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">progn</span>
+                  <span style="color: #8c8c8c;">(</span>setf current-order nil
+                        <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span> new-balance<span style="color: #8c8c8c;">)</span>
+                  t<span style="color: #8c8c8c;">))))))))</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-sec-3-3" class="outline-3">
+<h3 id="sec-3-3"><span class="section-number-3">3.3</span> <span class="label label-default DONE">DONE</span> Reporting for trading</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+One important feature is still missing from the <code>trader</code> class: keeping track of which orders went through and how the balance evolved over time. To implement this, we hook into balance changes and watch for successfully concluded orders.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>defclass/f reporting-trader <span style="color: #8c8c8c;">(</span>trader<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">((</span>balance-report <span style="color: #3a5fcd;">:accessor</span> balance-report<span style="color: #8c8c8c;">)</span>
+   <span style="color: #8c8c8c;">(</span>order-list <span style="color: #3a5fcd;">:initform</span> nil
+               <span style="color: #3a5fcd;">:accessor</span> order-list<span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">initialize-instance</span> <span style="color: #3a5fcd;">:after</span> <span style="color: #8c8c8c;">((</span>reporting-trader reporting-trader<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;key</span><span style="color: #8c8c8c;">)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">balance-report should be an array with length matching the stock history</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>history-length <span style="color: #8c8c8c;">(</span>length <span style="color: #8c8c8c;">(</span>stock-date <span style="color: #8c8c8c;">(</span>trader-stock reporting-trader<span style="color: #8c8c8c;">)))))</span>
+    <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>balance-report reporting-trader<span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>make-array history-length <span style="color: #3a5fcd;">:initial-element</span> nil<span style="color: #8c8c8c;">))</span>
+    <span style="color: #36648b;">;; </span><span style="color: #36648b;">we initialise the last entry (first date) with initial balance</span>
+    <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>balance-report reporting-trader<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>- history-length <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">))</span>
+          <span style="color: #8c8c8c;">(</span>trader-balance reporting-trader<span style="color: #8c8c8c;">))))</span>
+
+<span style="color: #36648b;">;; </span><span style="color: #36648b;">store data everytime the balance changes</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #8c8c8c;">(</span><span style="color: #0000ff;">setf trader-balance</span><span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:after</span> <span style="color: #8c8c8c;">(</span>value <span style="color: #8c8c8c;">(</span>reporting-trader reporting-trader<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>aref <span style="color: #8c8c8c;">(</span>balance-report reporting-trader<span style="color: #8c8c8c;">)</span> *current-date*<span style="color: #8c8c8c;">)</span> value<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #36648b;">;; </span><span style="color: #36648b;">we find out if a order was successful when it concludes</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">conclude</span> <span style="color: #3a5fcd;">:around</span> <span style="color: #8c8c8c;">((</span>reporting-trader reporting-trader<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;optional</span> final<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>order <span style="color: #8c8c8c;">(</span>current-order reporting-trader<span style="color: #8c8c8c;">))</span>
+        <span style="color: #8c8c8c;">(</span>result <span style="color: #8c8c8c;">(</span>call-next-method<span style="color: #8c8c8c;">)))</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> result
+      <span style="color: #8c8c8c;">(</span>push order <span style="color: #8c8c8c;">(</span>order-list reporting-trader<span style="color: #8c8c8c;">)))</span>
+    result<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+
+<p>
+If we do not trade every day, then there will be gaps in the <code>balance-report</code> vector. We need to fill these up, by copying the balance from the previous day. For convenience, we immediately return the vector.
+</p>
+
+<p>
+The order list should not require any further fixup.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">prepare-report</span> <span style="color: #8c8c8c;">((</span>reporting-trader reporting-trader<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">with-accessors</span> <span style="color: #8c8c8c;">((</span>balance-report balance-report<span style="color: #8c8c8c;">))</span> reporting-trader
+    <span style="color: #8c8c8c;">(</span>let1 <span style="color: #8c8c8c;">(</span>history-length <span style="color: #8c8c8c;">(</span>length balance-report<span style="color: #8c8c8c;">))</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">make sure the initial balance is present</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #ff6347; font-weight: bold;">assert</span> <span style="color: #8c8c8c;">(</span>aref balance-report <span style="color: #8c8c8c;">(</span>- history-length <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)))</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">do</span> <span style="color: #8c8c8c;">((</span>i <span style="color: #8c8c8c;">(</span>- history-length <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>- i <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">))</span>
+           <span style="color: #8c8c8c;">(</span>j <span style="color: #8c8c8c;">(</span>- history-length <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)</span> i<span style="color: #8c8c8c;">))</span>
+          <span style="color: #8c8c8c;">((</span>&lt; i <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span> balance-report<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">unless</span> <span style="color: #8c8c8c;">(</span>aref balance-report i<span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>aref balance-report i<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>aref balance-report j<span style="color: #8c8c8c;">)))))))</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3-4" class="outline-3">
+<h3 id="sec-3-4"><span class="section-number-3">3.4</span> <span class="label label-default DONE">DONE</span> Debugging helper class</h3>
+<div class="outline-text-3" id="text-3-4">
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defclass</span> <span style="color: #0000cd;">debugging-trader</span> <span style="color: #8c8c8c;">()</span>
+  <span style="color: #8c8c8c;">())</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">long</span> <span style="color: #3a5fcd;">:before</span> <span style="color: #8c8c8c;">((</span>debugging-trader debugging-trader<span style="color: #8c8c8c;">)</span> part<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>dbug <span style="color: #436eee;">"Started long trade on date ~A for part ~A"</span> *current-date* part<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">short</span> <span style="color: #3a5fcd;">:before</span> <span style="color: #8c8c8c;">((</span>debugging-trader debugging-trader<span style="color: #8c8c8c;">)</span> part<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>dbug <span style="color: #436eee;">"Started short trade on date ~A for part ~A"</span> *current-date* part<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">conclude</span> <span style="color: #3a5fcd;">:before</span> <span style="color: #8c8c8c;">((</span>debugging-trader debugging-trader<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;optional</span> final<span style="color: #8c8c8c;">)</span>
+   <span style="color: #8c8c8c;">(</span>dbug <span style="color: #436eee;">"Concluded trade ~A on date ~A "</span> <span style="color: #8c8c8c;">(</span>current-order debugging-trader<span style="color: #8c8c8c;">)</span> *current-date*<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3-5" class="outline-3">
+<h3 id="sec-3-5"><span class="section-number-3">3.5</span> <span class="label label-default DONE">DONE</span> Accessing past data</h3>
+<div class="outline-text-3" id="text-3-5">
+<p>
+The trading algorithm should be given only data from the past. We define some methods that take care of this filtering. We can only restrict the number of data points returned.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">past-data</span> <span style="color: #8c8c8c;">((</span>stock stock<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;optional</span> count<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>stock-subseq stock <span style="color: #8c8c8c;">(</span>+ *current-date* <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> count <span style="color: #8c8c8c;">(</span>+ *current-date* count <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">))))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">past-data</span> <span style="color: #8c8c8c;">((</span>stock-subseq stock-subseq<span style="color: #8c8c8c;">)</span> <span style="color: #0000cd;">&amp;optional</span> count<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>start <span style="color: #8c8c8c;">(</span>max <span style="color: #8c8c8c;">(</span>+ *current-date* <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>start stock-subseq<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #8c8c8c;">(</span>stock-subseq <span style="color: #8c8c8c;">(</span>parent stock-subseq<span style="color: #8c8c8c;">)</span> start
+                  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> count
+                      <span style="color: #8c8c8c;">(</span>min <span style="color: #8c8c8c;">(</span>+ start count<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>end stock-subseq<span style="color: #8c8c8c;">))</span>
+                      <span style="color: #8c8c8c;">(</span>end stock-subseq<span style="color: #8c8c8c;">)))))</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-3-6" class="outline-3">
+<h3 id="sec-3-6"><span class="section-number-3">3.6</span> <span class="label label-default DONE">DONE</span> Running the trader</h3>
+<div class="outline-text-3" id="text-3-6">
+<p>
+We now want to simulate the trader on the market. A trader is defined by subclassing <code>trader</code> and implementing the <code>trade</code> method (which should take no further arguments). The simulation can also be started at a later time.
+</p>
+
+<p>
+The initial balance for the trader will be set by the simulation function.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defgeneric</span> <span style="color: #0000ff;">trade</span> <span style="color: #8c8c8c;">(</span>trader<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">simulate-trader</span> <span style="color: #8c8c8c;">(</span>trader initial-balance <span style="color: #0000cd;">&amp;key</span> <span style="color: #8c8c8c;">(</span>start-after <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let*</span> <span style="color: #8c8c8c;">((</span>stock <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">))</span>
+         <span style="color: #8c8c8c;">(</span>history-length <span style="color: #8c8c8c;">(</span>length <span style="color: #8c8c8c;">(</span>stock-date stock<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>*current-date* <span style="color: #8c8c8c;">(</span>- history-length <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)))</span>
+      <span style="color: #8c8c8c;">(</span>setf <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">)</span> initial-balance<span style="color: #8c8c8c;">)</span>
+      <span style="color: #8c8c8c;">(</span>decf *current-date* start-after<span style="color: #8c8c8c;">)</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">main trading loop: call the trade every day</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">do</span> <span style="color: #8c8c8c;">()</span>
+          <span style="color: #8c8c8c;">((</span>&lt; *current-date* <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">))</span>
+        <span style="color: #8c8c8c;">(</span>trade trader<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>decf *current-date*<span style="color: #8c8c8c;">))</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">reset date to 0</span>
+      <span style="color: #8c8c8c;">(</span>setf *current-date* <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">if trader still has an order, conclude it</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> <span style="color: #8c8c8c;">(</span>busy-p trader<span style="color: #8c8c8c;">)</span>
+        <span style="color: #8c8c8c;">(</span>conclude trader t<span style="color: #8c8c8c;">))</span>
+      <span style="color: #8c8c8c;">(</span>prepare-report trader<span style="color: #8c8c8c;">)</span>
+      <span style="color: #8c8c8c;">(</span>trader-balance trader<span style="color: #8c8c8c;">))))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> <span class="label label-default DONE">DONE</span> Data visualisation</h2>
+<div class="outline-text-2" id="text-4">
+</div><div id="outline-container-sec-4-1" class="outline-3">
+<h3 id="sec-4-1"><span class="section-number-3">4.1</span> <span class="label label-default DONE">DONE</span> Plotting financial data</h3>
+<div class="outline-text-3" id="text-4-1">
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">gnuplot-date-tranform</span> <span style="color: #8c8c8c;">(</span>dashed-date<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>format nil <span style="color: #436eee;">"~A/~A/~A"</span>
+          <span style="color: #8c8c8c;">(</span>subseq dashed-date <span style="color: #b03060;">5</span> <span style="color: #b03060;">7</span><span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>subseq dashed-date <span style="color: #b03060;">8</span> <span style="color: #b03060;">10</span><span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>subseq dashed-date <span style="color: #b03060;">0</span> <span style="color: #b03060;">4</span><span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defgeneric</span> <span style="color: #0000ff;">plot-object</span> <span style="color: #8c8c8c;">(</span>object<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">plot-object</span> <span style="color: #8c8c8c;">((</span>stock stock<span style="color: #8c8c8c;">))</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">(eazy-gnuplot:gp :set :xdata :time)</span>
+  <span style="color: #36648b;">;; </span><span style="color: #36648b;">(eazy-gnuplot:gp :set :timefmt "%m/%d/%y")</span>
+  <span style="color: #8c8c8c;">(</span>eazy-gnuplot:plot <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">lambda</span> <span style="color: #8c8c8c;">()</span>
+                       <span style="color: #8c8c8c;">(</span>map nil <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">lambda</span> <span style="color: #8c8c8c;">(</span>d o l h c<span style="color: #8c8c8c;">)</span>
+                                  <span style="color: #36648b;">;; </span><span style="color: #36648b;">date open low high close</span>
+                                  <span style="color: #8c8c8c;">(</span>format t <span style="color: #436eee;">"~&amp;~A ~A ~A ~A ~A"</span> <span style="color: #8c8c8c;">(</span>gnuplot-date-tranform d<span style="color: #8c8c8c;">)</span> o l h c<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-date stock<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-open stock<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-low stock<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-high stock<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-close stock<span style="color: #8c8c8c;">))))</span>
+                     <span style="color: #3a5fcd;">:using</span> '<span style="color: #8c8c8c;">(</span><span style="color: #b03060;">0</span> <span style="color: #b03060;">2</span> <span style="color: #b03060;">3</span> <span style="color: #b03060;">4</span> <span style="color: #b03060;">5</span><span style="color: #8c8c8c;">)</span>
+                     <span style="color: #3a5fcd;">:with</span> 'financebars<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">plot*</span> <span style="color: #8c8c8c;">(</span>output <span style="color: #0000cd;">&amp;rest</span> objects<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">eazy-gnuplot:with-plots</span> <span style="color: #8c8c8c;">(</span>*standard-output* <span style="color: #3a5fcd;">:debug</span> nil<span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span>eazy-gnuplot:gp-setup <span style="color: #3a5fcd;">:terminal</span> '<span style="color: #8c8c8c;">(</span>pngcairo<span style="color: #8c8c8c;">)</span> <span style="color: #3a5fcd;">:output</span> output <span style="color: #3a5fcd;">:bars</span> <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">)</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">dolist</span> <span style="color: #8c8c8c;">(</span>o objects<span style="color: #8c8c8c;">)</span>
+      <span style="color: #8c8c8c;">(</span>plot-object o<span style="color: #8c8c8c;">)))</span>
+  output<span style="color: #8c8c8c;">)</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>plot* <span style="color: #436eee;">"plot-1.png"</span> *current-stock*<span style="color: #8c8c8c;">)</span>
+<span style="color: #8c8c8c;">(</span>plot* <span style="color: #436eee;">"plot-2.png"</span> <span style="color: #8c8c8c;">(</span>stock-subseq *current-stock* <span style="color: #b03060;">2000</span><span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+
+
+<figure>
+<p><img src="plot-1.png" class="img-responsive" alt="plot-1.png">
+</p>
+</figure>
+</div>
+
+<div id="outline-container-sec-4-1-1" class="outline-4">
+<h4 id="sec-4-1-1"><span class="section-number-4">4.1.1</span> <span class="label label-default DONE">DONE</span> fix date format for gnuplot</h4>
+</div>
+
+<div id="outline-container-sec-4-1-2" class="outline-4">
+<h4 id="sec-4-1-2"><span class="section-number-4">4.1.2</span> <span class="label label-primary TODO">TODO</span> fix date printing</h4>
+</div>
+<div id="outline-container-sec-4-1-3" class="outline-4">
+<h4 id="sec-4-1-3"><span class="section-number-4">4.1.3</span> <span class="label label-default DONE">DONE</span> fix timeline direction</h4>
+</div>
+</div>
+<div id="outline-container-sec-4-2" class="outline-3">
+<h3 id="sec-4-2"><span class="section-number-3">4.2</span> <span class="label label-default DONE">DONE</span> Plotting trader performance</h3>
+<div class="outline-text-3" id="text-4-2">
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">plot-object</span> <span style="color: #8c8c8c;">((</span>trader reporting-trader<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span>eazy-gnuplot:plot <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">lambda</span> <span style="color: #8c8c8c;">()</span>
+                       <span style="color: #8c8c8c;">(</span>map nil <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">lambda</span> <span style="color: #8c8c8c;">(</span>d b<span style="color: #8c8c8c;">)</span> 
+                                  <span style="color: #8c8c8c;">(</span>format t <span style="color: #436eee;">"~%~A ~A"</span> <span style="color: #8c8c8c;">(</span>gnuplot-date-tranform d<span style="color: #8c8c8c;">)</span> b<span style="color: #8c8c8c;">))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>stock-date <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)))</span>
+                            <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>balance-report trader<span style="color: #8c8c8c;">))))</span>
+                     <span style="color: #3a5fcd;">:using</span> '<span style="color: #8c8c8c;">(</span><span style="color: #b03060;">0</span> <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">)</span>
+                     <span style="color: #3a5fcd;">:with</span> 'lines<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> <span class="label label-default DONE">DONE</span> Basic trading algorithm</h2>
+<div class="outline-text-2" id="text-5">
+</div><div id="outline-container-sec-5-1" class="outline-3">
+<h3 id="sec-5-1"><span class="section-number-3">5.1</span> <span class="label label-primary TODO">TODO</span> First idea</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+The idea for my trading algorithm was to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
+</p>
+
+<p>
+However, I did not find a working implementation of the required fitting algorithms (or at least QR factorisation) in time, so this idea is for now abandoned.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5-2" class="outline-3">
+<h3 id="sec-5-2"><span class="section-number-3">5.2</span> <span class="label label-default DONE">DONE</span> Average comparing trader</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+Let's start by doing something not too complicated, which does require any complicated libraries.
+</p>
+
+<p>
+We look at a moving interval in the past, look at the average in the first and second half and compare those. I considered to introduced a random element by flipping a (weighted) coin to decide whether we want to trust the heuristic, but this lead to losses too often.
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">average</span> <span style="color: #8c8c8c;">(</span>vector<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>/ <span style="color: #8c8c8c;">(</span>reduce #'+ vector<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>length vector<span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">bins-average</span> <span style="color: #8c8c8c;">(</span>vector <span style="color: #0000cd;">&amp;optional</span> <span style="color: #8c8c8c;">(</span>bin-count <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">))</span>
+  <span style="color: #436eee;">"Split vector into `</span><span style="color: #191970;">bin-count</span><span style="color: #436eee;">' equally large sequences and a list of averages."</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #ff6347; font-weight: bold;">assert</span> <span style="color: #8c8c8c;">(</span>&lt;= <span style="color: #b03060;">2</span> bin-count<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let*</span> <span style="color: #8c8c8c;">((</span>bin-length <span style="color: #8c8c8c;">(</span>ceiling <span style="color: #8c8c8c;">(</span>length vector<span style="color: #8c8c8c;">)</span> bin-count<span style="color: #8c8c8c;">))</span>
+         <span style="color: #8c8c8c;">(</span>bins <span style="color: #8c8c8c;">(</span>iter <span style="color: #8c8c8c;">(</span>for i from <span style="color: #b03060;">0</span> below bin-count<span style="color: #8c8c8c;">)</span>
+                     <span style="color: #8c8c8c;">(</span>collect <span style="color: #8c8c8c;">(</span>subseq vector <span style="color: #8c8c8c;">(</span>* i bin-length<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>* <span style="color: #8c8c8c;">(</span>+ i <span style="color: #b03060;">1</span><span style="color: #8c8c8c;">)</span> bin-length<span style="color: #8c8c8c;">))))))</span>
+     <span style="color: #8c8c8c;">(</span>mapcar #'average bins<span style="color: #8c8c8c;">)))</span>
+</pre>
+</div>
+
+
+<p>
+The <code>trade</code> method will be called every day (before open) and has to make a decision whether to short, long or conclude a running trade.
+</p>
+
+<p>
+The trend function compares the averages in the two time intervals and decides if there is a significant upward/downward trend. We also distinguish between higher and lower levels of significance and adjust the prudence levels there.
+</p>
+
+<p>
+Also, we completely ignore the <b>high</b> and <b>low</b> data, instead we just look at <b>open</b> data for starting trades and the <b>close</b> data for concluding trades (as those are the actual numbers used for those operations).
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*optimistic-investment-factor*</span> <span style="color: #b03060;">2/3</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*pessimistic-investment-factor*</span> <span style="color: #b03060;">1/2</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*significance-level*</span> <span style="color: #b03060;">2</span><span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">trend</span> <span style="color: #8c8c8c;">(</span>list-2<span style="color: #8c8c8c;">)</span>
+  <span style="color: #436eee;">"For a two element list, check whether there is a significant</span>
+<span style="color: #436eee;">  downward (negative) or upward (positive) trend. Note that the chronological order</span>
+<span style="color: #436eee;">  goes backward (start of `</span><span style="color: #191970;">list-2</span><span style="color: #436eee;">' is more recent)."</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>diff <span style="color: #8c8c8c;">(</span>- <span style="color: #8c8c8c;">(</span>first list-2<span style="color: #8c8c8c;">)</span> <span style="color: #8c8c8c;">(</span>second list-2<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>&lt;= *significance-level* <span style="color: #8c8c8c;">(</span>abs diff<span style="color: #8c8c8c;">))</span>
+        diff
+        <span style="color: #b03060;">0</span><span style="color: #8c8c8c;">)))</span>
+
+<span style="color: #8c8c8c;">(</span>defclass/f randomised-average-cmp-trader <span style="color: #8c8c8c;">(</span>reporting-trader debugging-trader<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span>observation-frame-length<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defmethod</span> <span style="color: #0000ff;">trade</span> <span style="color: #8c8c8c;">((</span>trader randomised-average-cmp-trader<span style="color: #8c8c8c;">))</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">if</span> <span style="color: #8c8c8c;">(</span>current-order trader<span style="color: #8c8c8c;">)</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">if we have a trade going, check out the close data</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>trend <span style="color: #8c8c8c;">(</span>trend <span style="color: #8c8c8c;">(</span>bins-average
+                           <span style="color: #8c8c8c;">(</span>stock-close <span style="color: #8c8c8c;">(</span>past-data
+                                         <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span>
+                                         <span style="color: #8c8c8c;">(</span>observation-frame-length trader<span style="color: #8c8c8c;">)))))))</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">when</span> <span style="color: #8c8c8c;">(</span>or
+               <span style="color: #36648b;">;; </span><span style="color: #36648b;">upwards trend is bad for shorting</span>
+               <span style="color: #8c8c8c;">(</span>and <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type <span style="color: #8c8c8c;">(</span>current-order trader<span style="color: #8c8c8c;">))</span> <span style="color: #3a5fcd;">:short</span><span style="color: #8c8c8c;">)</span>
+                    <span style="color: #8c8c8c;">(</span>&lt; <span style="color: #b03060;">0</span> trend<span style="color: #8c8c8c;">))</span>
+               <span style="color: #36648b;">;; </span><span style="color: #36648b;">downwards trend is bad for longing</span>
+               <span style="color: #8c8c8c;">(</span>and <span style="color: #8c8c8c;">(</span>eql <span style="color: #8c8c8c;">(</span>order-type <span style="color: #8c8c8c;">(</span>current-order trader<span style="color: #8c8c8c;">))</span> <span style="color: #3a5fcd;">:long</span><span style="color: #8c8c8c;">)</span>
+                    <span style="color: #8c8c8c;">(</span>&gt; <span style="color: #b03060;">0</span> trend<span style="color: #8c8c8c;">)))</span>
+          <span style="color: #8c8c8c;">(</span>conclude trader<span style="color: #8c8c8c;">)))</span>
+      <span style="color: #36648b;">;; </span><span style="color: #36648b;">if we have no trade going, check the open data</span>
+      <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>trend <span style="color: #8c8c8c;">(</span>trend <span style="color: #8c8c8c;">(</span>bins-average
+                           <span style="color: #8c8c8c;">(</span>stock-open <span style="color: #8c8c8c;">(</span>past-data
+                                        <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">)</span>
+                                        <span style="color: #8c8c8c;">(</span>observation-frame-length trader<span style="color: #8c8c8c;">)))))))</span>
+        <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">cond</span> <span style="color: #8c8c8c;">((</span>&lt; <span style="color: #b03060;">0</span> trend<span style="color: #8c8c8c;">)</span>
+               <span style="color: #8c8c8c;">(</span>long trader *pessimistic-investment-factor*<span style="color: #8c8c8c;">))</span>
+              <span style="color: #8c8c8c;">((</span>&lt; <span style="color: #8c8c8c;">(</span>* <span style="color: #b03060;">2</span> *significance-level*<span style="color: #8c8c8c;">)</span> trend<span style="color: #8c8c8c;">)</span>
+               <span style="color: #8c8c8c;">(</span>long trader *optimistic-investment-factor*<span style="color: #8c8c8c;">))</span>
+              <span style="color: #8c8c8c;">((</span>&gt; <span style="color: #b03060;">0</span> trend<span style="color: #8c8c8c;">)</span>
+               <span style="color: #8c8c8c;">(</span>short trader *pessimistic-investment-factor*<span style="color: #8c8c8c;">))</span>
+              <span style="color: #8c8c8c;">((</span>&gt; <span style="color: #8c8c8c;">(</span>* -2 *significance-level*<span style="color: #8c8c8c;">)</span> trend<span style="color: #8c8c8c;">)</span>
+               <span style="color: #8c8c8c;">(</span>short trader *optimistic-investment-factor*<span style="color: #8c8c8c;">))))))</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-sec-5-3" class="outline-3">
+<h3 id="sec-5-3"><span class="section-number-3">5.3</span> <span class="label label-default DONE">DONE</span> Trial run and analysis</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp" id="rand-av-cmp-trader-test"><span style="color: #8c8c8c;">(</span>setf *optimistic-investment-factor* <span style="color: #b03060;">2/7</span>
+      *pessimistic-investment-factor* <span style="color: #b03060;">6/7</span>
+      *significance-level* <span style="color: #b03060;">1.6</span><span style="color: #8c8c8c;">)</span>
+
+<span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defpar</span> <span style="color: #0000ff;">*current-trader*</span>
+        <span style="color: #8c8c8c;">(</span>make-instance 'randomised-average-cmp-trader
+                       <span style="color: #3a5fcd;">:observation-frame-length</span> <span style="color: #b03060;">84</span>
+                       <span style="color: #3a5fcd;">:trader-stock</span> *current-stock*<span style="color: #8c8c8c;">))</span>
+
+<span style="color: #8c8c8c;">(</span>simulate-trader *current-trader* <span style="color: #b03060;">100000</span>
+                 <span style="color: #3a5fcd;">:start-after</span> <span style="color: #8c8c8c;">(</span>observation-frame-length *current-trader*<span style="color: #8c8c8c;">))</span>
+</pre>
+</div>
+
+<p>
+The final balance of the trader is:
+</p>
+<pre class="example">
+181325.2
+</pre>
+
+<p>
+Let's see how this evolved over time:
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>plot* <span style="color: #436eee;">"plot-3.png"</span> *current-trader*<span style="color: #8c8c8c;">)</span>
+<span style="color: #8c8c8c;">(</span>format nil <span style="color: #436eee;">"~F"</span> <span style="color: #8c8c8c;">(</span>trader-balance *current-trader*<span style="color: #8c8c8c;">))</span>
+<span style="color: #36648b;">;; </span><span style="color: #36648b;">(balance-report *current-trader*)</span>
+</pre>
+</div>
+
+
+<figure>
+<p><img src="plot-3.png" class="img-responsive" alt="plot-3.png">
+</p>
+</figure>
+
+<p>
+We can also have a look at how long we usually hold a stock
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span>mapcar #'order-duration <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>order-list *current-trader*<span style="color: #8c8c8c;">)))</span>
+</pre>
+</div>
+
+<pre class="example">
+(118 156 40 87 54 192 43 57 250 117 132 40 82 29 128 53 235 42 38 101 40 206
+ 277 64 72)
+</pre>
+
+<p>
+And here is for reproduction purporses the full data on the orders done.
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp"><span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">defun</span> <span style="color: #0000ff;">trader-order-table</span> <span style="color: #8c8c8c;">(</span>trader<span style="color: #8c8c8c;">)</span>
+  <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">let</span> <span style="color: #8c8c8c;">((</span>date-array <span style="color: #8c8c8c;">(</span>stock-date <span style="color: #8c8c8c;">(</span>trader-stock trader<span style="color: #8c8c8c;">))))</span>
+    <span style="color: #8c8c8c;">(</span>cons <span style="color: #8c8c8c;">(</span>list <span style="color: #436eee;">"Type"</span> <span style="color: #436eee;">"Volume"</span> <span style="color: #436eee;">"Start"</span> <span style="color: #436eee;">"End"</span> <span style="color: #436eee;">"Duration"</span><span style="color: #8c8c8c;">)</span>
+          <span style="color: #8c8c8c;">(</span>mapcar <span style="color: #8c8c8c;">(</span><span style="color: #1e90ff;">lambda</span> <span style="color: #8c8c8c;">(</span>o<span style="color: #8c8c8c;">)</span>
+                    <span style="color: #8c8c8c;">(</span>list <span style="color: #8c8c8c;">(</span>order-type o<span style="color: #8c8c8c;">)</span>
+                          <span style="color: #8c8c8c;">(</span>order-volume o<span style="color: #8c8c8c;">)</span>
+                          <span style="color: #8c8c8c;">(</span>aref date-array <span style="color: #8c8c8c;">(</span>order-start o<span style="color: #8c8c8c;">))</span>
+                          <span style="color: #8c8c8c;">(</span>aref date-array <span style="color: #8c8c8c;">(</span>order-end o<span style="color: #8c8c8c;">))</span>
+                          <span style="color: #8c8c8c;">(</span>order-duration o<span style="color: #8c8c8c;">)))</span>
+                  <span style="color: #8c8c8c;">(</span>reverse <span style="color: #8c8c8c;">(</span>order-list trader<span style="color: #8c8c8c;">))))))</span>
+
+<span style="color: #8c8c8c;">(</span>trader-order-table *current-trader*<span style="color: #8c8c8c;">)</span>
+</pre>
+</div>
+
+<table class="table table-striped table-bordered table-hover table-condensed">
+
+
+<colgroup>
+<col  class="left">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+
+<col  class="right">
+</colgroup>
+<tbody>
+<tr>
+<td class="text-left">Type</td>
+<td class="text-right">Volume</td>
+<td class="text-right">Start</td>
+<td class="text-right">End</td>
+<td class="text-right">Duration</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">593</td>
+<td class="text-right">2000-05-03</td>
+<td class="text-right">2000-10-19</td>
+<td class="text-right">118</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">600</td>
+<td class="text-right">2000-10-20</td>
+<td class="text-right">2001-06-06</td>
+<td class="text-right">156</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">697</td>
+<td class="text-right">2001-06-07</td>
+<td class="text-right">2001-08-03</td>
+<td class="text-right">40</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">704</td>
+<td class="text-right">2001-08-06</td>
+<td class="text-right">2001-12-13</td>
+<td class="text-right">87</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">811</td>
+<td class="text-right">2001-12-14</td>
+<td class="text-right">2002-03-06</td>
+<td class="text-right">54</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">802</td>
+<td class="text-right">2002-03-08</td>
+<td class="text-right">2002-12-10</td>
+<td class="text-right">192</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">1243</td>
+<td class="text-right">2002-12-11</td>
+<td class="text-right">2003-02-13</td>
+<td class="text-right">43</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">1260</td>
+<td class="text-right">2003-02-14</td>
+<td class="text-right">2003-05-08</td>
+<td class="text-right">57</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">1002</td>
+<td class="text-right">2003-05-09</td>
+<td class="text-right">2004-05-06</td>
+<td class="text-right">250</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">982</td>
+<td class="text-right">2004-05-07</td>
+<td class="text-right">2004-10-25</td>
+<td class="text-right">117</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">1002</td>
+<td class="text-right">2004-10-26</td>
+<td class="text-right">2005-05-05</td>
+<td class="text-right">132</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">989</td>
+<td class="text-right">2005-05-06</td>
+<td class="text-right">2005-07-05</td>
+<td class="text-right">40</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">967</td>
+<td class="text-right">2005-07-07</td>
+<td class="text-right">2005-11-01</td>
+<td class="text-right">82</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">952</td>
+<td class="text-right">2005-11-03</td>
+<td class="text-right">2005-12-15</td>
+<td class="text-right">29</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">880</td>
+<td class="text-right">2005-12-16</td>
+<td class="text-right">2006-06-22</td>
+<td class="text-right">128</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">882</td>
+<td class="text-right">2006-06-26</td>
+<td class="text-right">2006-09-11</td>
+<td class="text-right">53</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">807</td>
+<td class="text-right">2006-09-12</td>
+<td class="text-right">2007-08-20</td>
+<td class="text-right">235</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">788</td>
+<td class="text-right">2007-08-22</td>
+<td class="text-right">2007-10-22</td>
+<td class="text-right">42</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">740</td>
+<td class="text-right">2007-10-23</td>
+<td class="text-right">2007-12-17</td>
+<td class="text-right">38</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">739</td>
+<td class="text-right">2007-12-18</td>
+<td class="text-right">2008-05-14</td>
+<td class="text-right">101</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">790</td>
+<td class="text-right">2008-05-15</td>
+<td class="text-right">2008-07-14</td>
+<td class="text-right">40</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">813</td>
+<td class="text-right">2008-07-15</td>
+<td class="text-right">2009-05-08</td>
+<td class="text-right">206</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">1298</td>
+<td class="text-right">2009-05-11</td>
+<td class="text-right">2010-06-16</td>
+<td class="text-right">277</td>
+</tr>
+
+<tr>
+<td class="text-left">:SHORT</td>
+<td class="text-right">1260</td>
+<td class="text-right">2010-06-17</td>
+<td class="text-right">2010-09-17</td>
+<td class="text-right">64</td>
+</tr>
+
+<tr>
+<td class="text-left">:LONG</td>
+<td class="text-right">1251</td>
+<td class="text-right">2010-09-20</td>
+<td class="text-right">2010-12-31</td>
+<td class="text-right">72</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div id="outline-container-sec-5-4" class="outline-3">
+<h3 id="sec-5-4"><span class="section-number-3">5.4</span> Observations</h3>
+<div class="outline-text-3" id="text-5-4">
+<ul class="org-ul">
+<li><code>observation-frame-length</code> seems to be quite important. Low numbers like 40 even make us lose money big time.
+</li>
+<li>Also, it seems that when we detect higher changes, we should invest less. Probably because these changes go in both directions.
+</li>
+<li>However, it does not seem to work if we start to reverse the type of order for higher changes.
+</li>
+<li>Another parameter to be carefully chosen is the <code>*significance-level*</code>. 
+</li>
+<li>As we can see from the plot, the strategy can be improved. At one point, we more than tripled the initial balance, however we reinvested it and lost it again.
+</li>
+<li>So maybe there we should try to put aside large winnings, or at least think more about the invested amount.
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="col-md-3"><nav id="table-of-contents">
+<div id="text-table-of-contents" class="bs-docs-sidebar">
+<ul class="nav">
+<li><a href="#sec-1">1. Introduction</a></li>
+<li><a href="#sec-2">2. Importing data</a>
+<ul class="nav">
+<li><a href="#sec-2-1">2.1. Subclass for filtering to past data</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">3. Trading system</a>
+<ul class="nav">
+<li><a href="#sec-3-1">3.1. Orders</a></li>
+<li><a href="#sec-3-2">3.2. Trading</a></li>
+<li><a href="#sec-3-3">3.3. Reporting for trading</a></li>
+<li><a href="#sec-3-4">3.4. Debugging helper class</a></li>
+<li><a href="#sec-3-5">3.5. Accessing past data</a></li>
+<li><a href="#sec-3-6">3.6. Running the trader</a></li>
+</ul>
+</li>
+<li><a href="#sec-4">4. Data visualisation</a>
+<ul class="nav">
+<li><a href="#sec-4-1">4.1. Plotting financial data</a></li>
+<li><a href="#sec-4-2">4.2. Plotting trader performance</a></li>
+</ul>
+</li>
+<li><a href="#sec-5">5. Basic trading algorithm</a>
+<ul class="nav">
+<li><a href="#sec-5-1">5.1. First idea</a></li>
+<li><a href="#sec-5-2">5.2. Average comparing trader</a></li>
+<li><a href="#sec-5-3">5.3. Trial run and analysis</a></li>
+<li><a href="#sec-5-4">5.4. Observations</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+</div></div></div>
+<footer id="postamble" class="">
+<div><p class="author">Author: Olaf Merkert</p>
+<p class="date">Created: 2016-11-13 So 09:08</p>
+<p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.1.1 (<a href="http://orgmode.org">Org-mode</a> 8.3.6)</p>
+</div>
+</footer>
+</body>
+</html>
