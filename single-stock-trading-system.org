@@ -482,6 +482,7 @@ The =trade= method will be called every day (before open) and has to make a deci
 (defpar *optimistic-investment-factor* 2/3)
 (defpar *pessimistic-investment-factor* 1/2)
 (defpar *significance-level* 2)
+(defpar *reverse-optimistic-strategy* nil)
 
 (defun trend (list-2)
   "For a two element list, check whether there is a significant
@@ -515,30 +516,34 @@ The =trade= method will be called every day (before open) and has to make a deci
                            (stock-open (past-data
                                         (trader-stock trader)
                                         (observation-frame-length trader)))))))
-        (cond ((< 0 trend)
+        (cond ((< (* 2 *significance-level*) trend)
+               (if *reverse-optimistic-strategy*
+                   (short trader *optimistic-investment-factor*)
+                   (long trader *optimistic-investment-factor*)))
+              ((< 0 trend)
                (long trader *pessimistic-investment-factor*))
-              ((< (* 2 *significance-level*) trend)
-               (long trader *optimistic-investment-factor*))
-              ((> 0 trend)
-               (short trader *pessimistic-investment-factor*))
               ((> (* -2 *significance-level*) trend)
-               (short trader *optimistic-investment-factor*))))))
+               (if *reverse-optimistic-strategy*
+                   (long trader *optimistic-investment-factor*)
+                   (short trader *optimistic-investment-factor*)))
+              ((> 0 trend)
+               (short trader *pessimistic-investment-factor*))))))
 #+end_src
-*** DONE implement shorting
-As the stock here seems to lose value most of the time, this could be useful.
-*** DONE be more reluctant to conclude an order
+
+The =*reverse-optimistic-strategy*= is there for testing some hypothesis.
+*** TODO randomise invested volume a bit
 ** TODO Trial run and analysis
 Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp :results append
 (setf *random-trader-confidence* 4/7
-      ,*optimistic-investment-factor* 2/3
-      ,*pessimistic-investment-factor* 4/7
+      ,*optimistic-investment-factor* 2/7
+      ,*pessimistic-investment-factor* 5/7
       ,*significance-level* 1.3)
 
 (defpar *current-trader*
         (make-instance 'randomised-average-cmp-trader
-                       :observation-frame-length 100
+                       :observation-frame-length 86
                        :trader-stock *current-stock*))
 
 (simulate-trader *current-trader* 100000
@@ -546,16 +551,26 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 #+end_src
 
 #+RESULTS: rand-av-cmp-trader-test
-: 118271.766
-: 114350.945
-: 118785.64
-: 121663.95
-: 144193.98
-: 144193.98
-: 122114.22
-: 128599.305
-: 132877.84
-: 137725.16
+: 146786.78
+: 159355.1
+: 159355.1
+: 159355.1
+: 159355.1
+: 133749.6
+: 159068.58
+: 159624.16
+: 160204.44
+: 75160.53
+: 159339.25
+: 160204.44
+: 150837.6
+: 160204.44
+: 153286.89
+: 153691.19
+: 152831.9
+: 153286.89
+: 159928.42
+: 160204.44
 
 #+begin_src lisp
 (plot* "plot-3.png" *current-trader*)
