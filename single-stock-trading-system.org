@@ -86,7 +86,7 @@ For our trading algorithm, we need to restrict our view to the past. Sometimes i
 (defun stock-subseq (stock start &optional end)
   ;; if end is larger than sequence length, just go to sequence end
   (let1 (len (length (stock-date stock)))
-    (unless (<= end len)
+    (unless (or (not end) (<= end len))
       (setf end len)))
   (make-instance 'stock-subseq :parent stock :start start :end end))
 
@@ -466,15 +466,13 @@ We look at a moving interval in the past, look at the average in the first and s
   (let ((m (maximise seq)))
     (position m seq :test #'<=)))
 
-(defun random-average-compare (vector &optional (bin-count 2))
-  "Split vector into `bin-count' equally large sequences and return
-the position of the subsequence with largest average."
+(defun bins-average (vector &optional (bin-count 2))
+  "Split vector into `bin-count' equally large sequences and a list of averages."
   (assert (<= 2 bin-count))
   (let* ((bin-length (ceiling (length vector) bin-count))
          (bins (iter (for i from 0 below bin-count)
-                     (collect (subseq vector (* i bin-length) (* (+ i 1) bin-length)))))
-         (bins-average (mapcar #'average bins))) ; can't just use a sum because of different lengths
-    (argmax bins-average)))
+                     (collect (subseq vector (* i bin-length) (* (+ i 1) bin-length))))))
+     (mapcar #'average bins)))
 #+end_src
 
 Note that in case of equal averages, the first bin is going to be preferred.
@@ -483,6 +481,16 @@ The =trade= method will be called every day (before open) and has to make a deci
 #+begin_src lisp
 (defpar *optimistic-investment-factor* 2/3)
 (defpar *pessimistic-investment-factor* 1/2)
+(defpar *significance-level* 2)
+
+(defun trend (list-2)
+  "For a two element list, check whether there is a significant
+  downward (negative) or upward (positive) trend. Note that the chronological order
+  goes backward (start of `list-2' is more recent)."
+  (let ((diff (- (first list-2) (second list-2))))
+    (if (<= *significance-level* (abs diff))
+        diff
+        0)))
 
 (defclass/f randomised-average-cmp-trader (reporting-trader debugging-trader)
   (observation-frame-length))
@@ -490,37 +498,43 @@ The =trade= method will be called every day (before open) and has to make a deci
 (defmethod trade ((trader randomised-average-cmp-trader))
   (if (current-order trader)
       ;; if we have a trade going, check out the close data
-      (let ((highest-bin (random-average-compare (stock-close (past-data (trader-stock trader)
-                                                                         (observation-frame-length trader)))))
-            ;; ^ 0 upward trend, means 1 downward trend
-            ;; flip a coin to see if we want to trust the heuristic
-            (coin (flip-coin)))
-        (when (or (and (not coin) (eql 0 highest-bin))
-                  (and coin (eql 1 highest-bin)))
-          ;; get out of here
+      (let ((trend (trend (bins-average
+                           (stock-close (past-data
+                                         (trader-stock trader)
+                                         (observation-frame-length trader)))))))
+        (when (or
+               ;; upwards trend is bad for shorting
+               (and (eql (order-type (current-order trader)) :short)
+                    (< 0 trend))
+               ;; downwards trend is bad for longing
+               (and (eql (order-type (current-order trader)) :long)
+                    (> 0 trend)))
           (conclude trader)))
       ;; if we have no trade going, check the open data
-      (let ((highest-bin (random-average-compare (stock-open (past-data (trader-stock trader)
-                                                                        (observation-frame-length trader)))))
-            ;; ^ 0 upward trend, means 1 downward trend
-            ;; flip a coin to see if we want to trust the heuristic
-            (coin (flip-coin)))
-        (cond ((and coin (eql 0 highest-bin))
-               ;; let's do an optimistic investment
+      (let ((trend (trend (bins-average
+                           (stock-open (past-data
+                                        (trader-stock trader)
+                                        (observation-frame-length trader)))))))
+        (cond ((< 0 trend)
+               (long trader *pessimistic-investment-factor*))
+              ((< (* 2 *significance-level*) trend)
                (long trader *optimistic-investment-factor*))
-              ((and (not coin) (eql 1 highest-bin))
-               ;; let's be more cautious when investing
-               (long trader *pessimistic-investment-factor*))))))
+              ((> 0 trend)
+               (short trader *pessimistic-investment-factor*))
+              ((> (* -2 *significance-level*) trend)
+               (short trader *optimistic-investment-factor*))))))
 #+end_src
-*** TODO implement shorting
+*** DONE implement shorting
 As the stock here seems to lose value most of the time, this could be useful.
+*** DONE be more reluctant to conclude an order
 ** TODO Trial run and analysis
 Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
 #+name: rand-av-cmp-trader-test
-#+begin_src lisp
+#+begin_src lisp :results append
 (setf *random-trader-confidence* 4/7
       ,*optimistic-investment-factor* 2/3
-      ,*pessimistic-investment-factor* 1/3)
+      ,*pessimistic-investment-factor* 4/7
+      ,*significance-level* 1.3)
 
 (defpar *current-trader*
         (make-instance 'randomised-average-cmp-trader
@@ -530,6 +544,18 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
 (simulate-trader *current-trader* 100000
                  :start-after (observation-frame-length *current-trader*))
 #+end_src
+
+#+RESULTS: rand-av-cmp-trader-test
+: 118271.766
+: 114350.945
+: 118785.64
+: 121663.95
+: 144193.98
+: 144193.98
+: 122114.22
+: 128599.305
+: 132877.84
+: 137725.16
 
 #+begin_src lisp
 (plot* "plot-3.png" *current-trader*)
