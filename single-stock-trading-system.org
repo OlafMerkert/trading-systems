@@ -569,4 +569,7 @@ We can also have a look at how long we usually hold a stock
 #+begin_src lisp
 (mapcar #'order-duration (reverse (order-list *current-trader*)))
 #+end_src
-
+*** Observations
++ =observation-frame-length= seems to be quite important. Low numbers like 40 even make us lose money big time.
++ Also, it seems that when we detect higher changes, we should invest less. Probably because these changes go in both directions.
++ However, it does not seem to work if we start to reverse the type of order for higher changes.
