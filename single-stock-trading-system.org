@@ -7,13 +7,17 @@
 #+PROPERTY:  header-args :results silent :tangle yes :exports both
 #+TODO: TODO | DONE
 
-* TODO Introduction
+* DONE Introduction
 We wish to develop a basic trading system, which can watch a single stock and keep track of a single position an said stock.
 
 Our language of choice is Common Lisp, we start by loading the required dependencies.
 #+begin_src lisp
 (ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot))
 #+end_src
+
+The programming style chosen is literate programming. We think of our program as a book which contains source code in between the explanation/exposition of the actual problem. As programming environment, we use [[http://orgmode.org/][Org mode for Emacs]]. It easily allows to export to HTML or PDF (and more) and to extract just the source code (this is called /tangling/).
+
+You probably received this document with several files, including a PDF or HTML file with all the content, some image files for the plots, a =.lisp= file which contains just the Common Lisp code, and maybe even the =.org= file, which is the source document for all the others.
 
 * DONE Importing data
 We begin by downloading the CSV data and parsing it. Notice that months are given first and use numbers 0-11. For days, the usual numbering 1-31 is used.
@@ -423,7 +427,7 @@ The initial balance for the trader will be set by the simulation function.
                      :using '(0 2)
                      :with 'lines))
 #+end_src
-* TODO Basic trading algorithm
+* DONE Basic trading algorithm
 ** TODO First idea
 The idea for my trading algorithm was to do something a little bit more complicated thing than a moving average: Trying to fit a parabola to some moving frame of data. This should give some information also on the curvature, and maybe we can even predict or at least anticipate extrema.
 
@@ -499,7 +503,7 @@ Also, we completely ignore the *high* and *low* data, instead we just look at *o
               ((> (* -2 *significance-level*) trend)
                (short trader *optimistic-investment-factor*))))))
 #+end_src
-** TODO Trial run and analysis
+** DONE Trial run and analysis
 Now that everything is in place, let's try the trader. We can tweak the parameters a bit, too.
 #+name: rand-av-cmp-trader-test
 #+begin_src lisp :results append
@@ -580,7 +584,7 @@ And here is for reproduction purporses the full data on the orders done.
 | :SHORT |   1260 | 2010-06-17 | 2010-09-17 |       64 |
 | :LONG  |   1251 | 2010-09-20 | 2010-12-31 |       72 |
 
-*** Observations
+** Observations
 + =observation-frame-length= seems to be quite important. Low numbers like 40 even make us lose money big time.
 + Also, it seems that when we detect higher changes, we should invest less. Probably because these changes go in both directions.
 + However, it does not seem to work if we start to reverse the type of order for higher changes.
