@@ -10,7 +10,7 @@
 * DONE Introduction
 We wish to develop a basic trading system, which can watch a single stock and keep track of a single position an said stock.
 
-Our language of choice is Common Lisp, we start by loading the required dependencies.
+Our language of choice is Common Lisp, we start by loading the required dependencies through [[https://www.quicklisp.org/beta/][Quicklisp]].
 #+begin_src lisp
 (ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot))
 #+end_src
@@ -520,9 +520,11 @@ Now that everything is in place, let's try the trader. We can tweak the paramete
                  :start-after (observation-frame-length *current-trader*))
 #+end_src
 
+The final balance of the trader is:
 #+RESULTS: rand-av-cmp-trader-test
 : 181325.2
 
+Let's see how this evolved over time:
 #+begin_src lisp
 (plot* "plot-3.png" *current-trader*)
 (format nil "~F" (trader-balance *current-trader*))
