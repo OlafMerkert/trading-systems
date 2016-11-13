@@ -13,6 +13,7 @@ We wish to develop a basic trading system, which can watch a single stock and ke
 Our language of choice is Common Lisp, we start by loading the required dependencies through [[https://www.quicklisp.org/beta/][Quicklisp]].
 #+begin_src lisp
 (ql:quickload '(ol-utils drakma cl-csv parse-number eazy-gnuplot))
+(in-package :ol-user)
 #+end_src
 
 The programming style chosen is literate programming. We think of our program as a book which contains source code in between the explanation/exposition of the actual problem. As programming environment, we use [[http://orgmode.org/][Org mode for Emacs]]. It easily allows to export to HTML or PDF (and more) and to extract just the source code (this is called /tangling/).
